@@ -21,7 +21,6 @@ import {
   FileText,
   Filter,
   Globe,
-  Image as ImageIcon,
   Link2,
   Mail,
   MapPin,
@@ -29,7 +28,6 @@ import {
   Palette,
   Phone,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   User,
   Wifi,
@@ -86,8 +84,6 @@ export default function CreateQRCodePage() {
   const [isSaving, setIsSaving] = useState(false);
   const inputClass =
     "h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60";
-  const textareaClass =
-    "flex min-h-[120px] w-full rounded-[1.5rem] border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2";
 
   useEffect(() => {
     generateQRCode();
@@ -143,7 +139,7 @@ export default function CreateQRCodePage() {
         },
       });
       setQrImage(canvas.toDataURL("image/png"));
-    } catch (error) {
+    } catch (_error) {
       console.error("Error generating QR code:", error);
     } finally {
       setIsGenerating(false);
@@ -209,7 +205,7 @@ export default function CreateQRCodePage() {
         description: "QR code saved successfully",
       });
       router.push("/dashboard/qr-codes");
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to save QR code",

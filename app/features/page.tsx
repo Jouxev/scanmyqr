@@ -13,12 +13,8 @@ import {
   Globe,
   Smartphone,
   Lock,
-  Zap,
   Shield,
   Clock,
-  Users,
-  Star,
-  Check,
   ArrowRight,
 } from "lucide-react";
 

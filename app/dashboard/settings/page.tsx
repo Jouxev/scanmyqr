@@ -27,9 +27,6 @@ import {
   Download,
   Trash2,
   Sparkles,
-  Globe,
-  Building2,
-  Smartphone,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 

@@ -91,7 +91,7 @@ const invoices = [
 export default function BillingPage() {
   const { toast } = useToast();
 
-  const handleUpgrade = (planId: string) => {
+  const handleUpgrade = (_planId: string) => {
     toast({
       title: "Redirecting to checkout...",
       description: "Please wait while we redirect you to Stripe",

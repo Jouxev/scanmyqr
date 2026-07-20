@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TiptapLogo } from "@/components/brand/tiptap-logo";
@@ -41,7 +41,7 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard");
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

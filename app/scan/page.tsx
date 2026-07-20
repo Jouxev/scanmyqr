@@ -18,7 +18,6 @@ export default function ScanPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const html5QrRef = useRef<Html5Qrcode | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
 
   // Camera functions
   const startCamera = async () => {
@@ -147,8 +146,6 @@ export default function ScanPage() {
       const devices = await Html5Qr.getCameras();
       if (!devices || devices.length < 2) return;
 
-      const currentStream = html5QrRef.current.getRunningTrackCameraCapabilities();
-      // Simple toggle — stop and restart with the other camera
       const currentId = devices[0].id;
       const otherId = devices.find((d) => d.id !== currentId)?.id || devices[1].id;
       await stopCamera();

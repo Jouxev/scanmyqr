@@ -6,7 +6,6 @@ import {
   CreditCard,
   Globe,
   LayoutTemplate,
-  QrCode,
   ScanLine,
   ShieldCheck,
   Sparkles,

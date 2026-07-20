@@ -4,20 +4,17 @@ import { useState, useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Camera,
   Upload,
   Copy,
   ExternalLink,
   Share2,
-  Check,
   X,
   History,
   Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
 
 interface ScanResult {
   id: string;
@@ -32,7 +29,7 @@ export default function ScannerPage() {
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
   const [isCameraMode, setIsCameraMode] = useState(true);
-  const [fileInputKey, setFileInputKey] = useState(0);
+  const [fileInputKey] = useState(0);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,7 +118,7 @@ export default function ScannerPage() {
     });
   };
 
-  const onScanFailure = (error: string) => {
+  const onScanFailure = (_error: string) => {
     // Silent failure - continuous scanning
   };
 

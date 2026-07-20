@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import type { DashboardStats, RecentQRCode } from "@/lib/dashboard-data";
 
-const stats = [
+const _stats = [
   {
     title: "Total QR Codes",
     value: "0",
@@ -74,7 +74,7 @@ interface DashboardClientProps {
 export default function DashboardClient({
   stats: dbStats,
   recentQRCodes,
-  userName,
+  userName: _userName,
 }: DashboardClientProps) {
   // Merge DB stats into the stat cards
   const displayStats = [

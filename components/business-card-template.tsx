@@ -11,17 +11,13 @@ import {
   Mail,
   MapPin,
   Facebook,
-  MessageCircle,
   Phone,
-  Play,
-  Tiktok,
-  Send,
   Sparkles,
   Twitter,
 } from "lucide-react";
 
 import { RiTiktokLine } from "react-icons/ri";
-import { FaStar , FaViber, FaSnapchat, FaTelegramPlane, FaWhatsapp, FaYoutube, FaGlobe } from "react-icons/fa";
+import { FaStar , FaViber, FaSnapchat, FaTelegramPlane, FaWhatsapp, FaYoutube } from "react-icons/fa";
 export type BusinessCardTemplateId =
   | "executive"
   | "aurora"

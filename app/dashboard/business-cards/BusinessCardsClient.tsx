@@ -44,7 +44,6 @@ export default function BusinessCardsClient({ initialCards }: BusinessCardsClien
   const [cards, setCards] = useState<BusinessCard[]>(initialCards);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const publishedCards = cards.filter((card) => card.status === "PUBLISHED").length;
   const publicCards = cards.filter((card) => card.is_public).length;
   const totalVisits = cards.reduce((sum, card) => sum + (card.visits ?? 0), 0);
 
