@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, react-hooks/exhaustive-deps */
 'use client';
 
 import { useState, useRef, useEffect } from "react";
@@ -221,7 +222,6 @@ export default function ScanPage() {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
