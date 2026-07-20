@@ -36,6 +36,10 @@ export default async function EditBusinessCardPage({ params }: PageProps) {
     phone: card.phone ?? "",
     website: card.website ?? "",
     address: card.address ?? "",
+    googleMaps:
+      card.custom_links && typeof card.custom_links.googleMaps === "string"
+        ? card.custom_links.googleMaps
+        : "",
     bio: card.bio ?? "",
     avatarUrl: card.avatar_url ?? "",
     linkedin: card.linkedin ?? "",

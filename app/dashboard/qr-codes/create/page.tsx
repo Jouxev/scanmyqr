@@ -15,29 +15,25 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
-  Download,
+  ChevronRight,
   Copy,
+  Download,
+  FileText,
+  Filter,
+  Globe,
+  Image as ImageIcon,
   Link2,
   Mail,
-  Phone,
-  MessageSquare,
   MapPin,
-  Wifi,
-  User,
-  Share2,
-  Image as ImageIcon,
-  FileText,
-  Calendar,
-  Coins,
-  Globe,
+  MessageSquare,
+  Palette,
+  Phone,
+  ShieldCheck,
   Smartphone,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Github,
-  Youtube,
-  ChevronRight,
+  Sparkles,
+  User,
+  Wifi,
+  Wand2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -88,6 +84,10 @@ export default function CreateQRCodePage() {
   const [qrImage, setQrImage] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const inputClass =
+    "h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60";
+  const textareaClass =
+    "flex min-h-[120px] w-full rounded-[1.5rem] border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2";
 
   useEffect(() => {
     generateQRCode();
@@ -541,21 +541,82 @@ export default function CreateQRCodePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Create QR Code</h1>
-        <p className="text-muted-foreground mt-1">
-          Generate a custom QR code for any purpose
-        </p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-8">
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl shadow-slate-950/30 backdrop-blur-xl lg:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_28%),radial-gradient(circle_at_82%_18%,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(135deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.94))]" />
+        <div className="relative grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-cyan-200">
+              <Sparkles className="h-3.5 w-3.5" />
+              QR creation studio
+            </div>
+
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                Create QR Code
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
+                Build a polished QR experience with faster type selection, live preview, and
+                premium styling controls in one workflow.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                className="h-12 rounded-2xl border-white/10 bg-white/5 px-5 text-slate-100 hover:bg-white/10 hover:text-white"
+                onClick={() => setQrType("url")}
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Start with type
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 rounded-2xl border-white/10 bg-white/5 px-5 text-slate-100 hover:bg-white/10 hover:text-white"
+                onClick={generateQRCode}
+              >
+                <Wand2 className="mr-2 h-4 w-4" />
+                Refresh preview
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-5 shadow-lg shadow-slate-950/20">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Link2 className="h-4 w-4 text-cyan-300" />
+                Selected type
+              </div>
+              <p className="mt-3 text-2xl font-semibold capitalize text-white">{qrType}</p>
+              <p className="mt-1 text-sm text-slate-400">Switch between link, contact, social, and more</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-5 shadow-lg shadow-slate-950/20">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <Palette className="h-4 w-4 text-emerald-300" />
+                Color mode
+              </div>
+              <p className="mt-3 text-2xl font-semibold text-white">Custom</p>
+              <p className="mt-1 text-sm text-slate-400">Foreground and background are fully editable</p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/45 p-5 shadow-lg shadow-slate-950/20">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <ShieldCheck className="h-4 w-4 text-violet-300" />
+                Preview state
+              </div>
+              <p className="mt-3 text-2xl font-semibold text-white">{qrImage ? "Ready" : "Draft"}</p>
+              <p className="mt-1 text-sm text-slate-400">Live output updates as your content changes</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Form */}
         <div className="lg:col-span-2 space-y-6">
           {/* QR Type Selection */}
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>QR Code Type</CardTitle>
+              <CardTitle className="text-white">QR Code Type</CardTitle>
               <CardDescription>
                 Select the type of content for your QR code
               </CardDescription>
@@ -566,14 +627,16 @@ export default function CreateQRCodePage() {
                   <button
                     key={type.value}
                     onClick={() => setQrType(type.value)}
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    className={`rounded-[1.5rem] border p-4 text-left transition-all duration-300 ${
                       qrType === type.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
+                        ? "border-cyan-300/20 bg-gradient-to-br from-cyan-400/12 via-blue-500/10 to-violet-500/12 shadow-lg shadow-slate-950/20"
+                        : "border-white/10 bg-slate-950/35 hover:border-cyan-300/15 hover:bg-white/[0.05]"
                     }`}
                   >
-                    <type.icon className="h-6 w-6 mb-2 text-primary" />
-                    <div className="text-xs font-medium">{type.label}</div>
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-cyan-200">
+                      <type.icon className="h-5 w-5" />
+                    </div>
+                    <div className="text-xs font-medium text-white">{type.label}</div>
                   </button>
                 ))}
               </div>
@@ -581,9 +644,9 @@ export default function CreateQRCodePage() {
           </Card>
 
           {/* Content Form */}
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>Content</CardTitle>
+              <CardTitle className="text-white">Content</CardTitle>
               <CardDescription>
                 Enter the content for your QR code
               </CardDescription>
@@ -592,9 +655,9 @@ export default function CreateQRCodePage() {
           </Card>
 
           {/* Customization */}
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>Customization</CardTitle>
+              <CardTitle className="text-white">Customization</CardTitle>
               <CardDescription>
                 Customize the appearance of your QR code
               </CardDescription>
@@ -602,7 +665,7 @@ export default function CreateQRCodePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Foreground Color</Label>
+                  <Label className="text-slate-200">Foreground Color</Label>
                   <div className="flex gap-2">
                     <input
                       type="color"
@@ -610,19 +673,19 @@ export default function CreateQRCodePage() {
                       onChange={(e) =>
                         setForegroundColor(e.target.value)
                       }
-                      className="h-10 w-20 rounded-md border cursor-pointer"
+                      className="h-12 w-20 rounded-2xl border border-white/10 bg-slate-950/40 cursor-pointer"
                     />
                     <Input
                       value={foregroundColor}
                       onChange={(e) =>
                         setForegroundColor(e.target.value)
                       }
-                      className="flex-1"
+                      className={inputClass}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Background Color</Label>
+                  <Label className="text-slate-200">Background Color</Label>
                   <div className="flex gap-2">
                     <input
                       type="color"
@@ -630,14 +693,14 @@ export default function CreateQRCodePage() {
                       onChange={(e) =>
                         setBackgroundColor(e.target.value)
                       }
-                      className="h-10 w-20 rounded-md border cursor-pointer"
+                      className="h-12 w-20 rounded-2xl border border-white/10 bg-slate-950/40 cursor-pointer"
                     />
                     <Input
                       value={backgroundColor}
                       onChange={(e) =>
                         setBackgroundColor(e.target.value)
                       }
-                      className="flex-1"
+                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -649,9 +712,9 @@ export default function CreateQRCodePage() {
         {/* Right Column - Preview & Actions */}
         <div className="space-y-6">
           {/* QR Preview */}
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>Preview</CardTitle>
+              <CardTitle className="text-white">Preview</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
               {qrImage ? (
@@ -659,7 +722,7 @@ export default function CreateQRCodePage() {
                   <img
                     src={qrImage}
                     alt="QR Code"
-                    className="rounded-lg shadow-lg"
+                    className="rounded-[1.5rem] shadow-2xl shadow-slate-950/30"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                     <Button
@@ -673,8 +736,8 @@ export default function CreateQRCodePage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-64 h-64 bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">
+                <div className="flex h-64 w-64 items-center justify-center rounded-[1.5rem] border border-white/10 bg-slate-950/40">
+                  <p className="text-slate-400">
                     {isGenerating ? "Generating..." : "Enter content to generate"}
                   </p>
                 </div>
@@ -683,7 +746,7 @@ export default function CreateQRCodePage() {
               <div className="mt-6 w-full space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
                   onClick={() => handleDownload("png")}
                   disabled={!qrImage}
                 >
@@ -692,7 +755,7 @@ export default function CreateQRCodePage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
                   onClick={() => handleDownload("svg")}
                   disabled={!qrImage}
                 >
@@ -704,11 +767,11 @@ export default function CreateQRCodePage() {
           </Card>
 
           {/* Save Actions */}
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">QR Code Name</Label>
+                  <Label htmlFor="name" className="text-slate-200">QR Code Name</Label>
                   <Input
                     id="name"
                     placeholder="My QR Code"
@@ -716,15 +779,17 @@ export default function CreateQRCodePage() {
                     onChange={(e) =>
                       setQrData({ ...qrData, name: e.target.value })
                     }
+                    className={inputClass}
                   />
                 </div>
                 <Button
-                  className="w-full"
+                  className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-600 text-white"
                   onClick={handleSave}
                   loading={isSaving}
                   disabled={!qrImage}
                 >
                   Save QR Code
+                  <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </CardContent>

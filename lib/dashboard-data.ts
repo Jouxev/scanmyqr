@@ -152,6 +152,19 @@ export async function getQRCodes(
   return data as QRCode[];
 }
 
+export async function getQRCodeById(userId: string, qrId: string): Promise<QRCode | null> {
+  const { data, error } = await supabaseAdmin
+    .from("qr_codes")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("id", qrId)
+    .neq("status", "DELETED")
+    .single();
+
+  if (error || !data) return null;
+  return data as QRCode;
+}
+
 // ─── Business Cards ──────────────────────────────────────────────────────────
 
 export interface BusinessCardFilters {

@@ -46,6 +46,7 @@ export async function PUT(
     const customLinks = {
       ...(cleanString(body?.snapchat) ? { snapchat: cleanString(body?.snapchat) } : {}),
       ...(cleanString(body?.viber) ? { viber: cleanString(body?.viber) } : {}),
+      ...(cleanString(body?.googleMaps) ? { googleMaps: cleanString(body?.googleMaps) } : {}),
     };
 
     const { data: businessCard, error } = await supabaseAdmin
@@ -134,4 +135,3 @@ export async function DELETE(
     return NextResponse.json({ message: error.message || "Failed to delete" }, { status: 500 });
   }
 }
-

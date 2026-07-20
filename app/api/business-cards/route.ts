@@ -80,6 +80,7 @@ export async function POST(request: Request) {
     const customLinks = {
       ...(cleanString(body?.snapchat) ? { snapchat: cleanString(body?.snapchat) } : {}),
       ...(cleanString(body?.viber) ? { viber: cleanString(body?.viber) } : {}),
+      ...(cleanString(body?.googleMaps) ? { googleMaps: cleanString(body?.googleMaps) } : {}),
     };
 
     const { data: businessCard, error } = await supabaseAdmin

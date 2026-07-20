@@ -19,13 +19,22 @@ import {
   Sparkles,
   Twitter,
 } from "lucide-react";
-
-export type BusinessCardTemplateId = "executive" | "aurora" | "minimal";
+import { RiTiktokLine } from "react-icons/ri";
+import { FaViber, FaSnapchat, FaTelegramPlane, FaWhatsapp, FaYoutube, FaGlobe } from "react-icons/fa";
+export type BusinessCardTemplateId =
+  | "executive"
+  | "aurora"
+  | "minimal"
+  | "neon"
+  | "horizon"
+  | "monarch";
 
 export type BusinessCardTemplateMeta = {
   id: BusinessCardTemplateId;
   name: string;
   description: string;
+  category: "Premium" | "Modern" | "Minimal" | "Bold";
+  tag: string;
   primaryColor: string;
   backgroundColor: string;
   fontFamily: string;
@@ -40,6 +49,7 @@ export type BusinessCardTemplateData = {
   phone?: string | null;
   website?: string | null;
   address?: string | null;
+  googleMaps?: string | null;
   avatarUrl?: string | null;
   avatar_url?: string | null;
   linkedin?: string | null;
@@ -55,6 +65,7 @@ export type BusinessCardTemplateData = {
     | {
         snapchat?: string | null;
         viber?: string | null;
+        googleMaps?: string | null;
         [key: string]: unknown;
       }
     | null;
@@ -71,6 +82,8 @@ export const businessCardTemplates: BusinessCardTemplateMeta[] = [
     id: "executive",
     name: "Gold Prestige",
     description: "Bold black-and-gold layout inspired by premium printed business cards.",
+    category: "Premium",
+    tag: "Classic luxury",
     primaryColor: "#f5a400",
     backgroundColor: "#050505",
     fontFamily: "Poppins",
@@ -79,6 +92,8 @@ export const businessCardTemplates: BusinessCardTemplateMeta[] = [
     id: "aurora",
     name: "Aurora Glass",
     description: "Modern glowing card with layered gradients and soft glass effects.",
+    category: "Modern",
+    tag: "Glassmorphism",
     primaryColor: "#7c3aed",
     backgroundColor: "#07111f",
     fontFamily: "Space Grotesk",
@@ -87,9 +102,41 @@ export const businessCardTemplates: BusinessCardTemplateMeta[] = [
     id: "minimal",
     name: "Ivory Editorial",
     description: "Elegant editorial layout with a clean surface and premium typography.",
+    category: "Minimal",
+    tag: "Editorial",
     primaryColor: "#1f2937",
     backgroundColor: "#f7f1e8",
     fontFamily: "Manrope",
+  },
+  {
+    id: "neon",
+    name: "Neon Pulse",
+    description: "A futuristic dark layout with bright electric accents and glowing panels.",
+    category: "Bold",
+    tag: "Futuristic",
+    primaryColor: "#22d3ee",
+    backgroundColor: "#060816",
+    fontFamily: "Space Grotesk",
+  },
+  {
+    id: "horizon",
+    name: "Sunset Horizon",
+    description: "A warm premium gradient tuned for hospitality, lifestyle, and modern brand cards.",
+    category: "Modern",
+    tag: "Warm gradient",
+    primaryColor: "#fb7185",
+    backgroundColor: "#2d1530",
+    fontFamily: "Poppins",
+  },
+  {
+    id: "monarch",
+    name: "Monarch Ivory",
+    description: "An elegant ivory presentation with refined typography and a luxury feel.",
+    category: "Premium",
+    tag: "Luxury editorial",
+    primaryColor: "#7c5c38",
+    backgroundColor: "#f4ece1",
+    fontFamily: "Playfair Display",
   },
 ];
 
@@ -156,10 +203,25 @@ function buildWebsiteHref(value?: string | null) {
   return value ? buildExternalHref(value) : null;
 }
 
-function getCustomLink(data: BusinessCardTemplateData, key: "snapchat" | "viber") {
+function getCustomLink(data: BusinessCardTemplateData, key: "snapchat" | "viber" | "googleMaps") {
   const customLinks = data.custom_links;
   const value = customLinks?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getGoogleMapsHref(data: BusinessCardTemplateData) {
+  const mapsLink =
+    (typeof data.googleMaps === "string" && data.googleMaps.trim() ? data.googleMaps.trim() : null) ||
+    getCustomLink(data, "googleMaps");
+  if (mapsLink) {
+    return buildExternalHref(mapsLink);
+  }
+
+  if (data.address?.trim()) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address.trim())}`;
+  }
+
+  return null;
 }
 
 function buildSocialHref(kind: string, value?: string | null) {
@@ -206,15 +268,15 @@ function getSocialItems(data: BusinessCardTemplateData): SocialItem[] {
   }> = [
     { key: "facebook", label: "Facebook", raw: data.facebook, icon: Facebook },
     { key: "instagram", label: "Instagram", raw: data.instagram, icon: Instagram },
-    { key: "tiktok", label: "TikTok", raw: data.tiktok, icon: Tiktok },
+    { key: "tiktok", label: "TikTok", raw: data.tiktok, icon: RiTiktokLine  },
     { key: "twitter", label: "Twitter", raw: data.twitter, icon: Twitter },
     { key: "linkedin", label: "LinkedIn", raw: data.linkedin, icon: Linkedin },
-    { key: "whatsapp", label: "WhatsApp", raw: data.whatsapp, icon: MessageCircle },
-    { key: "telegram", label: "Telegram", raw: data.telegram, icon: Send },
-    { key: "viber", label: "Viber", raw: getCustomLink(data, "viber"), monogram: "vb" },
-    { key: "snapchat", label: "Snapchat", raw: getCustomLink(data, "snapchat"), monogram: "sc" },
+    { key: "whatsapp", label: "WhatsApp", raw: data.whatsapp, icon: FaWhatsapp },
+    { key: "telegram", label: "Telegram", raw: data.telegram, icon: FaTelegramPlane },
+    { key: "viber", label: "Viber", raw: getCustomLink(data, "viber"),icon: FaViber },
+    { key: "snapchat", label: "Snapchat", raw: getCustomLink(data, "snapchat"), icon: FaSnapchat },
     { key: "github", label: "GitHub", raw: data.github, icon: Github },
-    { key: "youtube", label: "YouTube", raw: data.youtube, icon: Play },
+    { key: "youtube", label: "YouTube", raw: data.youtube, icon: FaYoutube },
   ];
 
   for (const candidate of candidates) {
@@ -331,6 +393,7 @@ function ExecutiveTemplate({
   const primaryColor = getPrimaryColor(data, "#f5a400");
   const backgroundColor = getBackgroundColor(data, "#050505");
   const socials = getSocialItems(data);
+  const googleMapsHref = getGoogleMapsHref(data);
   const wrapper = compact ? "rounded-[24px]" : "rounded-[34px]";
   const bodyPadding = compact ? "px-4 pb-4 pt-5" : "px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-8";
   const titleSize = compact ? "text-lg" : "text-3xl sm:text-4xl lg:text-5xl";
@@ -425,15 +488,32 @@ function ExecutiveTemplate({
                 <ActionWrapper
                   href={buildWebsiteHref(data.website)}
                   clickable={clickable}
-                  className="inline-flex rounded-sm bg-white px-4 py-1.5 text-sm font-medium text-black"
+                  className="inline-flex rounded-sm bg-white px-4 py-1.5 text-sm font-medium text-black display-flex justify-center align-center"
                 >
-                  Website
+                 Visite Our Website
                 </ActionWrapper>
               )}
             </>
           )}
 
-          {data.address && <p className="text-white/80">{data.address}</p>}
+          {data.address && (
+            <ActionWrapper
+              href={googleMapsHref}
+              clickable={clickable}
+              className="block text-white/80 transition hover:text-white"
+            >
+              {data.address}
+            </ActionWrapper>
+          )}
+          {!compact && googleMapsHref && (
+            <ActionWrapper
+              href={googleMapsHref}
+              clickable={clickable}
+              className="inline-flex rounded-sm border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-white/10"
+            >
+              Open In Google Maps
+            </ActionWrapper>
+          )}
         </div>
 
         <div className={`mt-6 flex flex-wrap justify-center gap-3 ${compact ? "gap-2" : "gap-3.5"}`}>
@@ -473,6 +553,7 @@ function AuroraTemplate({
   const primaryColor = getPrimaryColor(data, "#7c3aed");
   const backgroundColor = getBackgroundColor(data, "#07111f");
   const socials = getSocialItems(data);
+  const googleMapsHref = getGoogleMapsHref(data);
 
   return (
     <div
@@ -512,7 +593,7 @@ function AuroraTemplate({
               data={data}
               compact={compact}
               className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/10 font-bold text-white ${
-                compact ? "h-14 w-14 text-sm" : "h-20 w-20 text-xl"
+                compact ? "h-14 w-14 text-sm" : "h-40 w-40 text-xl"
               }`}
               imageClassName="h-full w-full object-cover"
             />
@@ -527,7 +608,7 @@ function AuroraTemplate({
               { label: "Email", value: data.email, icon: Mail, href: buildEmailHref(data.email) },
               { label: "Phone", value: data.phone, icon: Phone, href: buildPhoneHref(data.phone) },
               { label: "Website", value: data.website, icon: Globe, href: buildWebsiteHref(data.website) },
-              { label: "Address", value: data.address, icon: MapPin, href: null },
+              { label: "Address", value: data.address, icon: MapPin, href: googleMapsHref },
             ]
               .filter((item) => item.value)
               .map((item) => {
@@ -602,6 +683,7 @@ function MinimalTemplate({
   const primaryColor = getPrimaryColor(data, "#1f2937");
   const backgroundColor = getBackgroundColor(data, "#f7f1e8");
   const socials = getSocialItems(data);
+  const googleMapsHref = getGoogleMapsHref(data);
 
   return (
     <div
@@ -655,7 +737,7 @@ function MinimalTemplate({
               { label: "Email", value: data.email, href: buildEmailHref(data.email) },
               { label: "Phone", value: data.phone, href: buildPhoneHref(data.phone) },
               { label: "Website", value: data.website, href: buildWebsiteHref(data.website) },
-              { label: "Address", value: data.address, href: null },
+              { label: "Address", value: data.address, href: googleMapsHref },
             ]
               .filter((item) => item.value)
               .map((item) => (
@@ -716,9 +798,12 @@ export function BusinessCardTemplatePreview({
 }: PreviewProps) {
   switch (templateId) {
     case "aurora":
+    case "neon":
       return <AuroraTemplate data={data} compact={compact} clickable={clickable} />;
     case "minimal":
+    case "monarch":
       return <MinimalTemplate data={data} compact={compact} clickable={clickable} />;
+    case "horizon":
     case "executive":
     default:
       return <ExecutiveTemplate data={data} compact={compact} clickable={clickable} />;

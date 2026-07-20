@@ -9,20 +9,38 @@ import {
   ChevronRight,
   Copy,
   Download,
+  Eye,
   Github,
   Globe,
   Instagram,
+  LayoutTemplate,
   Linkedin,
+  MapPin,
   MessageCircle,
+  Palette,
   Play,
+  RotateCcw,
+  Search,
   Send,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  SwatchBook,
   Twitter,
+  Wand2,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   businessCardTemplates,
@@ -45,6 +63,7 @@ type FormState = {
   phone: string;
   website: string;
   address: string;
+  googleMaps: string;
   bio: string;
   avatarUrl: string;
   linkedin: string;
@@ -74,6 +93,20 @@ type BusinessCardEditorProps = {
 };
 
 type Step = 1 | 2;
+type PreviewMode = "full" | "compact";
+type TemplateFilter = "All" | "Premium" | "Modern" | "Minimal" | "Bold";
+type SocialFieldKey =
+  | "facebook"
+  | "linkedin"
+  | "twitter"
+  | "instagram"
+  | "tiktok"
+  | "github"
+  | "snapchat"
+  | "whatsapp"
+  | "telegram"
+  | "viber"
+  | "youtube";
 
 const initialTemplate = businessCardTemplates[0];
 const defaultFormState: FormState = {
@@ -85,6 +118,7 @@ const defaultFormState: FormState = {
   phone: "",
   website: "",
   address: "",
+  googleMaps: "",
   bio: "",
   avatarUrl: "",
   linkedin: "",
@@ -105,6 +139,83 @@ const defaultFormState: FormState = {
   isPublic: true,
 };
 
+const templateFilters: TemplateFilter[] = ["All", "Premium", "Modern", "Minimal", "Bold"];
+const fontOptions = [
+  "Poppins",
+  "Inter",
+  "Manrope",
+  "Space Grotesk",
+  "Playfair Display",
+  "DM Sans",
+  "Montserrat",
+];
+const palettePresets = [
+  { name: "Ocean", primaryColor: "#22d3ee", backgroundColor: "#071827", fontFamily: "Inter" },
+  { name: "Royal", primaryColor: "#8b5cf6", backgroundColor: "#120c2e", fontFamily: "Space Grotesk" },
+  { name: "Sunset", primaryColor: "#fb7185", backgroundColor: "#2d1530", fontFamily: "Poppins" },
+  { name: "Forest", primaryColor: "#34d399", backgroundColor: "#08231b", fontFamily: "Manrope" },
+  { name: "Ivory", primaryColor: "#7c5c38", backgroundColor: "#f4ece1", fontFamily: "Playfair Display" },
+  { name: "Slate", primaryColor: "#334155", backgroundColor: "#f8fafc", fontFamily: "Inter" },
+];
+const socialFields: Array<{
+  id: SocialFieldKey;
+  label: string;
+  placeholder: string;
+  icon?: ReactNode;
+  badge?: string;
+}> = [
+  { id: "facebook", label: "Facebook", placeholder: "https://facebook.com/...", badge: "f" },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    placeholder: "https://linkedin.com/in/...",
+    icon: <Linkedin className="h-4 w-4" />,
+  },
+  {
+    id: "twitter",
+    label: "Twitter / X",
+    placeholder: "https://x.com/...",
+    icon: <Twitter className="h-4 w-4" />,
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    placeholder: "https://instagram.com/...",
+    icon: <Instagram className="h-4 w-4" />,
+  },
+  { id: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@...", badge: "tt" },
+  {
+    id: "github",
+    label: "GitHub",
+    placeholder: "https://github.com/...",
+    icon: <Github className="h-4 w-4" />,
+  },
+  { id: "snapchat", label: "Snapchat", placeholder: "@yourhandle", badge: "sc" },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    placeholder: "+213...",
+    icon: <MessageCircle className="h-4 w-4" />,
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    placeholder: "@username",
+    icon: <Send className="h-4 w-4" />,
+  },
+  { id: "viber", label: "Viber", placeholder: "+213...", badge: "vb" },
+  {
+    id: "youtube",
+    label: "YouTube",
+    placeholder: "https://youtube.com/@...",
+    icon: <Play className="h-4 w-4" />,
+  },
+];
+
+function clsx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
 function StepChip({
   number,
   title,
@@ -118,22 +229,27 @@ function StepChip({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+      className={`relative overflow-hidden rounded-[1.5rem] border px-4 py-4 transition-all duration-300 ${
         active
-          ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
-          : "border-border bg-background/60"
+          ? "border-cyan-300/20 bg-gradient-to-br from-cyan-400/14 via-blue-500/10 to-violet-500/12 shadow-xl shadow-slate-950/20"
+          : "border-white/10 bg-white/[0.045]"
       }`}
     >
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      <div className="relative flex items-center gap-3">
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
-          active || done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+        className={`flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold ${
+          active || done
+            ? "bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-lg shadow-blue-950/30"
+            : "bg-white/5 text-slate-400"
         }`}
       >
         {done ? <Check className="h-4 w-4" /> : number}
       </div>
       <div>
-        <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Step {number}</div>
-        <div className="text-sm font-medium">{title}</div>
+        <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Step {number}</div>
+        <div className="text-sm font-medium text-white">{title}</div>
+      </div>
       </div>
     </div>
   );
@@ -158,15 +274,15 @@ function SocialField({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-foreground">
+      <Label htmlFor={id} className="flex items-center gap-2 text-slate-200">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200">
           {icon || <span className="text-[10px] font-bold uppercase">{badge}</span>}
         </span>
         <span>{label}</span>
       </Label>
       <div className="relative">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/80">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200">
             {icon || <span className="text-[10px] font-bold uppercase">{badge}</span>}
           </span>
         </div>
@@ -175,7 +291,7 @@ function SocialField({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-14"
+          className="h-12 rounded-2xl border-white/10 bg-slate-950/40 pl-14 text-slate-100 placeholder:text-slate-400 focus-visible:ring-cyan-400/60"
         />
       </div>
     </div>
@@ -190,6 +306,9 @@ export default function BusinessCardEditor({
   const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState<Step>(mode === "edit" ? 2 : 1);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("full");
+  const [templateFilter, setTemplateFilter] = useState<TemplateFilter>("All");
+  const [templateSearch, setTemplateSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [createdCard, setCreatedCard] = useState<CreatedCardState | null>(null);
   const [qrImage, setQrImage] = useState("");
@@ -205,13 +324,46 @@ export default function BusinessCardEditor({
       businessCardTemplates[0],
     [form.template]
   );
+  const visibleTemplates = useMemo(() => {
+    return businessCardTemplates.filter((template) => {
+      const matchesFilter = templateFilter === "All" || template.category === templateFilter;
+      const search = templateSearch.trim().toLowerCase();
+      const matchesSearch =
+        search.length === 0 ||
+        template.name.toLowerCase().includes(search) ||
+        template.description.toLowerCase().includes(search) ||
+        template.tag.toLowerCase().includes(search);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [templateFilter, templateSearch]);
 
   const pageTitle = mode === "create" ? "Create Business Card" : "Edit Business Card";
   const pageDescription =
     mode === "create"
-      ? "Follow the steps to choose a design, add your information, and generate a live online card."
-      : "Update the template, profile details, and social links for this business card.";
+      ? "Choose a layout quickly, customize the visual style, and publish a stronger online business card with less friction."
+      : "Update the selected template, brand details, and contact channels from one stronger editing workflow without losing the current card data.";
   const submitLabel = mode === "create" ? "Generate Card" : "Save Changes";
+  const helperStats = [
+    {
+      label: mode === "create" ? "Workflow" : "Editing",
+      value: mode === "create" ? "Faster setup" : "Live update",
+      icon: Wand2,
+      tone: "text-cyan-300",
+    },
+    {
+      label: "Visibility",
+      value: form.isPublic ? "Public link on" : "Private mode",
+      icon: ShieldCheck,
+      tone: "text-emerald-300",
+    },
+    {
+      label: "Template",
+      value: activeTemplate.name,
+      icon: Eye,
+      tone: "text-violet-300",
+    },
+  ];
 
   const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -227,6 +379,24 @@ export default function BusinessCardEditor({
       primaryColor: template.primaryColor,
       backgroundColor: template.backgroundColor,
       fontFamily: template.fontFamily,
+    }));
+  };
+
+  const applyPalettePreset = (preset: (typeof palettePresets)[number]) => {
+    setForm((current) => ({
+      ...current,
+      primaryColor: preset.primaryColor,
+      backgroundColor: preset.backgroundColor,
+      fontFamily: preset.fontFamily,
+    }));
+  };
+
+  const resetTemplateDefaults = () => {
+    setForm((current) => ({
+      ...current,
+      primaryColor: activeTemplate.primaryColor,
+      backgroundColor: activeTemplate.backgroundColor,
+      fontFamily: activeTemplate.fontFamily,
     }));
   };
 
@@ -343,11 +513,68 @@ export default function BusinessCardEditor({
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">{pageTitle}</h1>
-        <p className="mt-1 text-muted-foreground">{pageDescription}</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-8">
+      <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.045] p-6 shadow-2xl shadow-slate-950/30 backdrop-blur-xl lg:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_28%),radial-gradient(circle_at_82%_18%,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(135deg,_rgba(15,23,42,0.68),_rgba(2,6,23,0.94))]" />
+        <div className="relative grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-cyan-200">
+              <Sparkles className="h-3.5 w-3.5" />
+              {mode === "create" ? "Business card studio" : "Business card editor"}
+            </div>
+
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                {pageTitle}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 md:text-base">
+                {pageDescription}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                className="h-12 rounded-2xl border-white/10 bg-white/5 px-5 text-slate-100 hover:bg-white/10 hover:text-white"
+                onClick={() => setStep(1)}
+              >
+                <LayoutTemplate className="mr-2 h-4 w-4" />
+                {mode === "edit" ? "Change Template" : "Choose Template"}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 rounded-2xl border-white/10 bg-white/5 px-5 text-slate-100 hover:bg-white/10 hover:text-white"
+                onClick={() => setStep(2)}
+              >
+                <Palette className="mr-2 h-4 w-4" />
+                Edit content
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+            {helperStats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-3xl border border-white/10 bg-slate-950/45 p-5 shadow-lg shadow-slate-950/20"
+              >
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <stat.icon className={`h-4 w-4 ${stat.tone}`} />
+                  {stat.label}
+                </div>
+                <p className="mt-3 text-2xl font-semibold text-white">{stat.value}</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {stat.label === "Template"
+                    ? "Current selected card presentation"
+                    : stat.label === "Visibility"
+                      ? "Control public access before saving"
+                      : "Move from template to launch with less friction"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-3 md:grid-cols-2">
         <StepChip number={1} title="Choose Template" active={step === 1} done={step > 1} />
@@ -357,251 +584,297 @@ export default function BusinessCardEditor({
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-6">
           {step === 1 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Step 1: Choose Template</CardTitle>
-                <CardDescription>
-                  Pick the card style first. The next step will use this template for live preview and final output.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4 lg:grid-cols-3">
-                {businessCardTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => handleSelectTemplate(template.id)}
-                    className={`rounded-3xl border p-3 text-left transition-all ${
-                      form.template === template.id
-                        ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    <BusinessCardTemplatePreview
-                      templateId={template.id}
-                      compact
-                      data={{
-                        ...form,
-                        primaryColor: template.primaryColor,
-                        backgroundColor: template.backgroundColor,
-                        fontFamily: template.fontFamily,
-                      }}
-                    />
-                    <div className="px-2 pb-2 pt-3">
-                      <div className="font-medium">{template.name}</div>
-                      <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
+            <div className="space-y-6">
+              <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Choose Template Faster</CardTitle>
+                  <CardDescription>
+                    Filter the library, compare layouts quickly, and continue with the selected template already configured.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        placeholder="Search templates..."
+                        value={templateSearch}
+                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        className="h-12 rounded-2xl border-white/10 bg-slate-950/40 pl-11 text-slate-100 placeholder:text-slate-400"
+                      />
                     </div>
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
+                    <div className="flex flex-wrap gap-2">
+                      {templateFilters.map((filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => setTemplateFilter(filter)}
+                          className={clsx(
+                            "rounded-full border px-4 py-2 text-sm transition",
+                            templateFilter === filter
+                              ? "border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
+                              : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                          )}
+                        >
+                          {filter}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {visibleTemplates.length > 0 ? (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {visibleTemplates.map((template) => (
+                        <button
+                          key={template.id}
+                          type="button"
+                          onClick={() => handleSelectTemplate(template.id)}
+                          className={clsx(
+                            "overflow-hidden rounded-[1.75rem] border p-3 text-left transition-all duration-300",
+                            form.template === template.id
+                              ? "border-cyan-300/20 bg-gradient-to-br from-cyan-400/12 via-blue-500/10 to-violet-500/12 shadow-xl shadow-slate-950/20"
+                              : "border-white/10 bg-slate-950/35 hover:border-cyan-300/15 hover:bg-white/[0.05]"
+                          )}
+                        >
+                          <BusinessCardTemplatePreview
+                            templateId={template.id}
+                            compact
+                            data={{
+                              ...form,
+                              primaryColor: template.primaryColor,
+                              backgroundColor: template.backgroundColor,
+                              fontFamily: template.fontFamily,
+                            }}
+                          />
+                          <div className="px-1 pb-1 pt-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="font-medium text-white">{template.name}</div>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.24em] text-slate-300">
+                                {template.category}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm text-slate-400">{template.description}</p>
+                            <div className="mt-3 text-xs uppercase tracking-[0.24em] text-slate-500">
+                              {template.tag}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/35 p-6 text-center text-slate-400">
+                      No templates match your filter. Try another keyword or category.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
+                <CardHeader>
+                  <CardTitle className="text-white">Selected Template</CardTitle>
+                  <CardDescription>
+                    Your current selection is ready to edit with matching color and typography defaults.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-cyan-200">
+                      {activeTemplate.category}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300">
+                      {activeTemplate.tag}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white">{activeTemplate.name}</h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-400">{activeTemplate.description}</p>
+                  </div>
+                  <BusinessCardTemplatePreview templateId={form.template} data={form} />
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <>
-              <Card>
+              {mode === "edit" && (
+                <Card className="border-cyan-300/15 bg-cyan-300/8 shadow-xl shadow-slate-950/20">
+                  <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-sm font-medium text-white">Change template without losing data</div>
+                      <p className="mt-1 text-sm text-slate-300">
+                        Your current name, logo, contact info, and social links stay intact when you switch to another template.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
+                      onClick={() => setStep(1)}
+                    >
+                      <LayoutTemplate className="mr-2 h-4 w-4" />
+                      Choose Another Template
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
                 <CardHeader>
-                  <CardTitle>Step 2: Add User Info</CardTitle>
+                  <CardTitle className="text-white">Step 2: Add User Info</CardTitle>
                   <CardDescription>
                     This content is shown on the public card and used for the generated QR link.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Logo</Label>
+                    <Label className="text-slate-200">Logo</Label>
                     <div className="grid gap-4 md:grid-cols-[132px_1fr]">
-                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/20">
+                      <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-[1.5rem] border border-dashed border-white/10 bg-slate-950/40">
                         {form.avatarUrl ? (
                           <img src={form.avatarUrl} alt="Business logo preview" className="h-full w-full object-cover" />
                         ) : (
-                          <span className="px-4 text-center text-xs text-muted-foreground">
+                          <span className="px-4 text-center text-xs text-slate-400">
                             Upload logo
                           </span>
                         )}
                       </div>
                       <div className="space-y-3">
-                        <Input type="file" accept="image/*" onChange={handleLogoUpload} />
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 file:text-slate-100"
+                        />
                         <Input
                           placeholder="Or paste a logo image URL"
                           value={form.avatarUrl}
                           onChange={(e) => updateField("avatarUrl", e.target.value)}
+                          className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                         />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-slate-400">
                           The logo appears on the selected business card template.
                         </p>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="name">Business / Person Name</Label>
+                    <Label htmlFor="name" className="text-slate-200">Business / Person Name</Label>
                     <Input
                       id="name"
                       placeholder="Your Business Name"
                       value={form.name}
                       onChange={(e) => updateField("name", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="title">Tagline / Title</Label>
+                    <Label htmlFor="title" className="text-slate-200">Tagline / Title</Label>
                     <Input
                       id="title"
                       placeholder="#1 Platform For Digital Business"
                       value={form.title}
                       onChange={(e) => updateField("title", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
+                    <Label htmlFor="company" className="text-slate-200">Company</Label>
                     <Input
                       id="company"
                       placeholder="Your Company"
                       value={form.company}
                       onChange={(e) => updateField("company", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="bio">Short Description</Label>
+                    <Label htmlFor="bio" className="text-slate-200">Short Description</Label>
                     <textarea
                       id="bio"
-                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex min-h-[140px] w-full rounded-[1.5rem] border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-slate-100 ring-offset-background placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 focus-visible:ring-offset-2"
                       placeholder="Brief description of your business comes here..."
                       value={form.bio}
                       onChange={(e) => updateField("bio", e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone" className="text-slate-200">Phone</Label>
                     <Input
                       id="phone"
                       placeholder="9518311798"
                       value={form.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-slate-200">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="email@yoursite.com"
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="website">Website</Label>
+                    <Label htmlFor="website" className="text-slate-200">Website</Label>
                     <Input
                       id="website"
                       placeholder="https://www.yoursite.com"
                       value={form.website}
                       onChange={(e) => updateField("website", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address" className="text-slate-200">Address</Label>
                     <Input
                       id="address"
                       placeholder="12/34, Area, City - 456789"
                       value={form.address}
                       onChange={(e) => updateField("address", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
                     />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="googleMaps" className="flex items-center gap-2 text-slate-200">
+                      <MapPin className="h-4 w-4 text-cyan-300" />
+                      Google Maps Link
+                    </Label>
+                    <Input
+                      id="googleMaps"
+                      placeholder="https://maps.google.com/..."
+                      value={form.googleMaps}
+                      onChange={(e) => updateField("googleMaps", e.target.value)}
+                      className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100 placeholder:text-slate-400"
+                    />
+                    <p className="text-xs text-slate-400">
+                      Paste your Google Maps location URL so visitors can open directions directly.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
                 <CardHeader>
-                  <CardTitle>Social Links</CardTitle>
+                  <CardTitle className="text-white">Social Links</CardTitle>
                   <CardDescription>
                     Add the channels you want visitors to tap directly from your digital business card.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-2">
-                  <SocialField
-                    id="facebook"
-                    label="Facebook"
-                    placeholder="https://facebook.com/..."
-                    value={form.facebook}
-                    onChange={(value) => updateField("facebook", value)}
-                    badge="f"
-                  />
-                  <SocialField
-                    id="linkedin"
-                    label="LinkedIn"
-                    placeholder="https://linkedin.com/in/..."
-                    value={form.linkedin}
-                    onChange={(value) => updateField("linkedin", value)}
-                    icon={<Linkedin className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="twitter"
-                    label="Twitter / X"
-                    placeholder="https://x.com/..."
-                    value={form.twitter}
-                    onChange={(value) => updateField("twitter", value)}
-                    icon={<Twitter className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="instagram"
-                    label="Instagram"
-                    placeholder="https://instagram.com/..."
-                    value={form.instagram}
-                    onChange={(value) => updateField("instagram", value)}
-                    icon={<Instagram className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="tiktok"
-                    label="TikTok"
-                    placeholder="https://tiktok.com/@..."
-                    value={form.tiktok}
-                    onChange={(value) => updateField("tiktok", value)}
-                    badge="tt"
-                  />
-                  <SocialField
-                    id="github"
-                    label="GitHub"
-                    placeholder="https://github.com/..."
-                    value={form.github}
-                    onChange={(value) => updateField("github", value)}
-                    icon={<Github className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="snapchat"
-                    label="Snapchat"
-                    placeholder="@yourhandle"
-                    value={form.snapchat}
-                    onChange={(value) => updateField("snapchat", value)}
-                    badge="sc"
-                  />
-                  <SocialField
-                    id="whatsapp"
-                    label="WhatsApp"
-                    placeholder="+213..."
-                    value={form.whatsapp}
-                    onChange={(value) => updateField("whatsapp", value)}
-                    icon={<MessageCircle className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="telegram"
-                    label="Telegram"
-                    placeholder="@username"
-                    value={form.telegram}
-                    onChange={(value) => updateField("telegram", value)}
-                    icon={<Send className="h-4 w-4" />}
-                  />
-                  <SocialField
-                    id="viber"
-                    label="Viber"
-                    placeholder="+213..."
-                    value={form.viber}
-                    onChange={(value) => updateField("viber", value)}
-                    badge="vb"
-                  />
-                  <SocialField
-                    id="youtube"
-                    label="YouTube"
-                    placeholder="https://youtube.com/@..."
-                    value={form.youtube}
-                    onChange={(value) => updateField("youtube", value)}
-                    icon={<Play className="h-4 w-4" />}
-                  />
+                  {socialFields.map((field) => (
+                    <SocialField
+                      key={field.id}
+                      id={field.id}
+                      label={field.label}
+                      placeholder={field.placeholder}
+                      value={form[field.id]}
+                      onChange={(value) => updateField(field.id, value)}
+                      icon={field.icon}
+                      badge={field.badge}
+                    />
+                  ))}
                 </CardContent>
               </Card>
             </>
@@ -609,49 +882,150 @@ export default function BusinessCardEditor({
         </div>
 
         <div className="space-y-6">
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>Template Controls</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <SlidersHorizontal className="h-5 w-5 text-cyan-300" />
+                Template Editor
+              </CardTitle>
               <CardDescription>
-                Adjust colors, publish state, and visibility before saving.
+                Quickly switch templates, apply design presets, and fine-tune colors and typography.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Primary Color</Label>
+            <CardContent className="space-y-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-slate-200">Quick Template Switch</Label>
+                  <Button
+                    variant="ghost"
+                    className="h-8 rounded-full px-3 text-slate-300 hover:bg-white/5 hover:text-white"
+                    onClick={resetTemplateDefaults}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reset Style
+                  </Button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {businessCardTemplates.map((template) => (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => handleSelectTemplate(template.id)}
+                      className={clsx(
+                        "rounded-2xl border px-3 py-3 text-left transition",
+                        form.template === template.id
+                          ? "border-cyan-300/20 bg-cyan-300/10 text-white"
+                          : "border-white/10 bg-slate-950/35 text-slate-300 hover:bg-white/5 hover:text-white"
+                      )}
+                    >
+                      <div className="font-medium">{template.name}</div>
+                      <div className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-500">
+                        {template.category}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-slate-200">
+                  <SwatchBook className="h-4 w-4 text-emerald-300" />
+                  Palette Presets
+                </Label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {palettePresets.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => applyPalettePreset(preset)}
+                      className="rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-left transition hover:bg-white/5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.primaryColor }} />
+                        <span
+                          className="h-4 w-4 rounded-full border border-white/10"
+                          style={{ backgroundColor: preset.backgroundColor }}
+                        />
+                        <span className="text-sm font-medium text-white">{preset.name}</span>
+                      </div>
+                      <div className="mt-2 text-xs uppercase tracking-[0.24em] text-slate-500">
+                        {preset.fontFamily}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
+                <Label className="flex items-center gap-2 text-slate-200">
+                  <Palette className="h-4 w-4 text-violet-300" />
+                  Manual Styling
+                </Label>
+                <div className="space-y-2">
+                  <Label className="text-slate-400">Primary Color</Label>
                 <div className="flex gap-2">
                   <input
                     type="color"
                     value={form.primaryColor}
                     onChange={(e) => updateField("primaryColor", e.target.value)}
-                    className="h-10 w-16 rounded border"
+                    className="h-12 w-16 rounded-2xl border border-white/10 bg-slate-950/40"
                   />
                   <Input
                     value={form.primaryColor}
                     onChange={(e) => updateField("primaryColor", e.target.value)}
+                    className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Background Color</Label>
+                <Label className="text-slate-400">Background Color</Label>
                 <div className="flex gap-2">
                   <input
                     type="color"
                     value={form.backgroundColor}
                     onChange={(e) => updateField("backgroundColor", e.target.value)}
-                    className="h-10 w-16 rounded border"
+                    className="h-12 w-16 rounded-2xl border border-white/10 bg-slate-950/40"
                   />
                   <Input
                     value={form.backgroundColor}
                     onChange={(e) => updateField("backgroundColor", e.target.value)}
+                    className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100"
                   />
                 </div>
               </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-400">Font Family</Label>
+                  <Select value={form.fontFamily} onValueChange={(value) => updateField("fontFamily", value)}>
+                    <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-white/10 bg-slate-900/95 text-slate-100">
+                      {fontOptions.map((font) => (
+                        <SelectItem key={font} value={font}>
+                          {font}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-slate-400">Preview Size</Label>
+                  <Select value={previewMode} onValueChange={(value) => setPreviewMode(value as PreviewMode)}>
+                    <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-slate-950/40 text-slate-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-white/10 bg-slate-900/95 text-slate-100">
+                      <SelectItem value="full">Full Preview</SelectItem>
+                      <SelectItem value="compact">Compact Preview</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status" className="text-slate-200">Status</Label>
                 <select
                   id="status"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-12 w-full rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100"
                   value={form.status}
                   onChange={(e) => updateField("status", e.target.value)}
                 >
@@ -660,15 +1034,15 @@ export default function BusinessCardEditor({
                   <option value="ARCHIVED">Archived</option>
                 </select>
               </div>
-              <label className="flex items-center gap-3 rounded-lg border border-border p-3">
+              <label className="flex items-center gap-3 rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4">
                 <input
                   type="checkbox"
                   checked={form.isPublic}
                   onChange={(e) => updateField("isPublic", e.target.checked)}
                 />
                 <div>
-                  <div className="text-sm font-medium">Public card</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-sm font-medium text-white">Public card</div>
+                  <div className="text-xs text-slate-400">
                     Allow the business card to be visible from its generated link.
                   </div>
                 </div>
@@ -676,22 +1050,26 @@ export default function BusinessCardEditor({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
             <CardHeader>
-              <CardTitle>Live Preview</CardTitle>
+              <CardTitle className="text-white">Live Preview</CardTitle>
               <CardDescription>
                 This is how the selected design will look when visitors open the card.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <BusinessCardTemplatePreview templateId={form.template} data={form} />
+              <BusinessCardTemplatePreview
+                templateId={form.template}
+                data={form}
+                compact={previewMode === "compact"}
+              />
             </CardContent>
           </Card>
 
           <div className="flex gap-3">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
               onClick={() => {
                 if (step === 1) {
                   router.push("/dashboard/business-cards");
@@ -706,38 +1084,53 @@ export default function BusinessCardEditor({
               ) : (
                 <>
                   <ChevronLeft className="mr-2 h-4 w-4" />
-                  Back To Templates
+                  {mode === "edit" ? "Change Template" : "Back To Templates"}
                 </>
               )}
             </Button>
             {step === 1 ? (
-              <Button className="flex-1" onClick={() => setStep(2)}>
+              <Button
+                className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-600 text-white"
+                onClick={() => setStep(2)}
+              >
                 Continue To Info
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
-              <Button className="flex-1" onClick={handleSave} loading={isSaving}>
+              <Button
+                className="flex-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-600 text-white"
+                onClick={handleSave}
+                loading={isSaving}
+              >
                 {submitLabel}
               </Button>
             )}
           </div>
 
           {step === 2 && (
-            <Card>
+            <Card className="border-white/10 bg-white/[0.045] shadow-xl shadow-slate-950/20">
               <CardHeader>
-                <CardTitle>Quick Tips</CardTitle>
+                <CardTitle className="text-white">Quick Tips</CardTitle>
                 <CardDescription>
                   Add only the links you want to show. Saved links become clickable actions on the public card.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-primary" />
+              <CardContent className="grid gap-3 text-sm text-slate-300">
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-3">
+                  <Globe className="h-4 w-4 text-cyan-300" />
                   Use full URLs for websites and social profiles when possible.
                 </div>
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-primary" />
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-3">
+                  <MapPin className="h-4 w-4 text-rose-300" />
+                  Paste the full Google Maps share link to let visitors open your location quickly.
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-3">
+                  <MessageCircle className="h-4 w-4 text-emerald-300" />
                   WhatsApp and Telegram can also work with phone numbers or usernames.
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-3">
+                  <Wand2 className="h-4 w-4 text-violet-300" />
+                  Use a palette preset first, then fine-tune the colors if you want a custom look.
                 </div>
               </CardContent>
             </Card>
