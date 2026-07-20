@@ -1,138 +1,94 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import prisma from "@/lib/db";
+import { randomUUID } from "crypto";
+import { getAppSession } from "@/lib/auth-session";
+import { getQRCodes } from "@/lib/dashboard-data";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getAppSession(request);
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const type = searchParams.get("type");
-    const search = searchParams.get("search");
-    const folderId = searchParams.get("folderId");
+    const search = searchParams.get("search") ?? undefined;
+    const type = searchParams.get("type") ?? undefined;
 
-    const where: any = {
-      userId: session.user.id,
-      status: "ACTIVE",
-    };
+    const userId = (session.user as any).id;
+    const qrcodes = await getQRCodes(userId, { search, type });
 
-    if (type) {
-      where.type = type;
-    }
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { title: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    if (folderId) {
-      where.folderId = folderId;
-    }
-
-    const [qrCodes, total] = await Promise.all([
-      prisma.qRCode.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          scans: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      }),
-      prisma.qRCode.count({ where }),
-    ]);
-
-    return NextResponse.json({
-      qrCodes: qrCodes.map((qr) => ({
-        ...qr,
-        scanCount: qr.scans.length,
-        scans: undefined,
-      })),
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    });
+    return NextResponse.json({ qrCodes: qrcodes, total: qrcodes.length });
   } catch (error) {
     console.error("Error fetching QR codes:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getAppSession(request);
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const {
-      name,
-      type,
-      content,
-      title,
-      description,
-      foregroundColor,
-      backgroundColor,
-      gradientColors,
-      frameStyle,
-      eyeStyle,
-      logoUrl,
-      logoSize,
-      downloadFormat,
-      folderId,
-      dynamic,
-      expiresAt,
-    } = body;
+    const name =
+      typeof body?.name === "string" && body.name.trim()
+        ? body.name.trim()
+        : "Untitled QR Code";
+    const type =
+      typeof body?.type === "string" && body.type.trim()
+        ? body.type.trim().toUpperCase()
+        : null;
+    const content =
+      typeof body?.content === "string" && body.content.trim()
+        ? body.content.trim()
+        : null;
 
-    const shortCode = Math.random().toString(36).substring(2, 10);
+    if (!type || !content) {
+      return NextResponse.json(
+        { message: "QR code type and content are required" },
+        { status: 400 }
+      );
+    }
 
-    const qrCode = await prisma.qRCode.create({
-      data: {
-        userId: session.user.id,
-        name: name || "Untitled QR Code",
+    const shortCode = randomUUID().replace(/-/g, "").slice(0, 12);
+    const { data: qrCode, error } = await supabaseAdmin
+      .from("qr_codes")
+      .insert({
+        user_id: (session.user as any).id,
+        name,
         type,
         content,
-        shortCode,
-        title,
-        description,
-        foregroundColor: foregroundColor || "#000000",
-        backgroundColor: backgroundColor || "#ffffff",
-        gradientColors,
-        frameStyle,
-        eyeStyle,
-        logoUrl,
-        logoSize,
-        downloadFormat: downloadFormat || "png",
-        folderId,
-        dynamic: dynamic || false,
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
-      },
-    });
+        short_code: shortCode,
+        dynamic: false,
+        is_active: true,
+        status: "ACTIVE",
+        scans: 0,
+        foreground_color:
+          typeof body?.foregroundColor === "string" && body.foregroundColor.trim()
+            ? body.foregroundColor
+            : "#000000",
+        background_color:
+          typeof body?.backgroundColor === "string" && body.backgroundColor.trim()
+            ? body.backgroundColor
+            : "#ffffff",
+      })
+      .select()
+      .single();
 
-    return NextResponse.json(qrCode, { status: 201 });
+    if (error || !qrCode) {
+      return NextResponse.json(
+        { message: error?.message || "Failed to create QR code" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ qrCode }, { status: 201 });
   } catch (error) {
     console.error("Error creating QR code:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
+

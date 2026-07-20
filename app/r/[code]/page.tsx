@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import prisma from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 interface PageProps {
   params: Promise<{ code: string }>;
@@ -7,20 +7,21 @@ interface PageProps {
 
 export default async function ScanPage({ params }: PageProps) {
   const { code } = await params;
-  
-  const qrCode = await prisma.qRCode.findUnique({
-    where: { shortCode: code },
-  });
+
+  const { data: qrCode } = await supabaseAdmin
+    .from("qr_codes")
+    .select("short_code, type, content")
+    .eq("short_code", code)
+    .eq("is_active", true)
+    .single();
 
   if (!qrCode) {
     redirect("/not-found");
   }
 
-  // For URLs, redirect to the content
   if (qrCode.type === "URL" && qrCode.content.startsWith("http")) {
     redirect(qrCode.content);
   }
 
-  // For other types, redirect to a page that displays the content
   redirect(`/view/${code}`);
 }

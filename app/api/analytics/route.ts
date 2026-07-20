@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import prisma from "@/lib/db";
+import { getAppSession } from "@/lib/auth-session";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getAppSession(request);
+    if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -13,45 +13,33 @@ export async function GET(request: Request) {
     const qrCodeId = searchParams.get("qrCodeId");
 
     if (!qrCodeId) {
-      return NextResponse.json(
-        { message: "QR code ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "QR code ID is required" }, { status: 400 });
     }
 
-    const qrCode = await prisma.qRCode.findFirst({
-      where: {
-        id: qrCodeId,
-        userId: session.user.id,
-      },
-    });
+    const userId = (session.user as any).id;
+
+    const { data: qrCode } = await supabaseAdmin
+      .from("qr_codes")
+      .select("id")
+      .eq("id", qrCodeId)
+      .eq("user_id", userId)
+      .single();
 
     if (!qrCode) {
-      return NextResponse.json(
-        { message: "QR code not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "QR code not found" }, { status: 404 });
     }
 
-    const [scans, analytics] = await Promise.all([
-      prisma.qRCodeScan.findMany({
-        where: { qrCodeId },
-        orderBy: { scannedAt: "desc" },
-        take: 100,
-      }),
-      prisma.qRCodeAnalytics.findMany({
-        where: { qrCodeId },
-        orderBy: { date: "desc" },
-        take: 30,
-      }),
-    ]);
+    const { data: scans } = await supabaseAdmin
+      .from("qr_code_scans")
+      .select("*")
+      .eq("qr_code_id", qrCodeId)
+      .order("scanned_at", { ascending: false })
+      .limit(100);
 
-    return NextResponse.json({ scans, analytics });
+    return NextResponse.json({ scans: scans ?? [], analytics: [] });
   } catch (error) {
     console.error("Error fetching QR code analytics:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
+

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/db";
-import UAParser from "ua-parser-js";
-import geoip from "geoip-lite";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { UAParser } from "ua-parser-js";
 
 export async function GET(request: Request) {
   try {
@@ -9,75 +8,70 @@ export async function GET(request: Request) {
     const shortCode = searchParams.get("code");
 
     if (!shortCode) {
-      return NextResponse.json(
-        { message: "Short code is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Short code is required" }, { status: 400 });
     }
 
-    const qrCode = await prisma.qRCode.findUnique({
-      where: { shortCode },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const { data: qrCode } = await supabaseAdmin
+      .from("qr_codes")
+      .select("id, content, type, name, user_id")
+      .eq("short_code", shortCode)
+      .eq("is_active", true)
+      .single();
 
     if (!qrCode) {
-      return NextResponse.json(
-        { message: "QR code not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "QR code not found" }, { status: 404 });
     }
 
-    // Get client information
+    // Get client info
     const userAgent = request.headers.get("user-agent") || "";
     const parser = new UAParser(userAgent);
     const result = parser.getResult();
-
-    // Get IP (in production, use proper IP detection)
     const ip = request.headers.get("x-forwarded-for") || "unknown";
-    const geo = geoip.lookup(ip);
+    let geo: { country?: string | null; city?: string | null } | null = null;
+
+    try {
+      const geoip = await import("geoip-lite");
+      geo = geoip.default.lookup(ip);
+    } catch {
+      // Geolocation is optional for QR scan tracking.
+    }
 
     // Create scan record
-    const scan = await prisma.qRCodeScan.create({
-      data: {
-        qrCodeId: qrCode.id,
-        ipAddress: ip,
-        userAgent,
+    const { data: scan } = await supabaseAdmin
+      .from("qr_code_scans")
+      .insert({
+        qr_code_id: qrCode.id,
+        ip_address: ip,
+        user_agent: userAgent,
         device: result.device.type || "desktop",
         browser: result.browser.name || "Unknown",
-        os: result.os.name
-          ? `${result.os.name} ${result.os.version || ""}`.trim()
-          : "Unknown",
+        os: result.os.name ? `${result.os.name} ${result.os.version || ""}`.trim() : "Unknown",
         country: geo?.country || null,
         city: geo?.city || null,
-      },
-    });
+      })
+      .select()
+      .single();
 
-    // Update scan count
-    await prisma.qRCode.update({
-      where: { id: qrCode.id },
-      data: { scans: { increment: 1 } },
-    });
+    // Increment scan count on QR code
+    const { data: updated } = await supabaseAdmin
+      .from("qr_codes")
+      .select("scans")
+      .eq("id", qrCode.id)
+      .single();
 
-    // Return the QR code content
+    await supabaseAdmin
+      .from("qr_codes")
+      .update({ scans: (updated?.scans ?? 0) + 1 })
+      .eq("id", qrCode.id);
+
     return NextResponse.json({
       content: qrCode.content,
       type: qrCode.type,
       name: qrCode.name,
-      scanId: scan.id,
+      scanId: scan?.id,
     });
   } catch (error) {
     console.error("Error resolving QR code:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }

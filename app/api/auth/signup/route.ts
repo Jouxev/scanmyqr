@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import prisma from "@/lib/db";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: Request) {
   try {
@@ -13,9 +18,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    if (password.length < 8) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .single();
 
     if (existingUser) {
       return NextResponse.json(
@@ -24,24 +39,49 @@ export async function POST(request: Request) {
       );
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
+    // Create user
+    const { data: user, error: createError } = await supabase
+      .from("users")
+      .insert({
+        name: name || "User",
         email,
         password: hashedPassword,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (createError) {
+      console.error("Create user error:", createError);
+      return NextResponse.json(
+        { message: "Failed to create user" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { message: "User created successfully", userId: user.id },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signup error:", error);
+    
+    // Check if it's a database connection error
+    if (error.message?.includes("fetch failed") || 
+        error.message?.includes("connect ECONNREFUSED")) {
+      return NextResponse.json(
+        { 
+          message: "Database connection error. Please create database tables first.",
+          error: "DATABASE_NOT_CONFIGURED" 
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: error.message || "Internal server error" },
       { status: 500 }
     );
   }

@@ -1,27 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export function middleware(req: NextRequest) {
-  const isLoggedIn = false; // Simplified for demo
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isLoggedIn = !!token;
+
   const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
-  const isOnAuth = req.nextUrl.pathname.startsWith("/login") || 
-                   req.nextUrl.pathname.startsWith("/signup");
+  const isOnAuth =
+    req.nextUrl.pathname.startsWith("/login") ||
+    req.nextUrl.pathname.startsWith("/signup");
   const isOnApi = req.nextUrl.pathname.startsWith("/api");
+  const isOnHome = req.nextUrl.pathname === "/";
 
-  // Allow API routes
-  if (isOnApi) {
-    return NextResponse.next();
-  }
-
-  // Redirect logged-in users away from auth pages
-  if (isOnAuth && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  // Redirect non-logged-in users to login
-  if (isOnDashboard && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  if (isOnApi) return NextResponse.next();
+  if (isOnHome) return NextResponse.next();
+  if (isOnAuth && isLoggedIn) return NextResponse.redirect(new URL("/dashboard", req.url));
+  if (isOnDashboard && !isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
 
   return NextResponse.next();
 }
