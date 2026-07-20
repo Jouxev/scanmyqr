@@ -35,25 +35,27 @@ export interface RecentQRCode {
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const qrCodeScansTable = supabaseAdmin.from("qr_code_scans") as any;
+
   // Total QR codes
-  const { count: totalQRCodes } = await supabaseAdmin
-    .from("qr_codes")
+  const { count: totalQRCodes } = await qrCodesTable
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .neq("status", "DELETED");
 
   // Total scans across all QR codes
-  const { data: scansData } = await supabaseAdmin
-    .from("qr_codes")
+  const { data: scansData } = (await qrCodesTable
     .select("scans")
     .eq("user_id", userId)
-    .neq("status", "DELETED");
+    .neq("status", "DELETED")) as {
+    data: Array<Pick<Database["public"]["Tables"]["qr_codes"]["Row"], "scans">> | null;
+  };
 
   const totalScans = scansData?.reduce((sum, qr) => sum + (qr.scans ?? 0), 0) ?? 0;
 
   // Active campaigns (QR codes that are active)
-  const { count: activeCampaigns } = await supabaseAdmin
-    .from("qr_codes")
+  const { count: activeCampaigns } = await qrCodesTable
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("is_active", true)
@@ -69,18 +71,22 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  const { data: recentScans } = await supabaseAdmin
-    .from("qr_code_scans")
+  const { data: userQrCodes } = (await qrCodesTable
+    .select("id")
+    .eq("user_id", userId)
+    .neq("status", "DELETED")) as {
+    data: Array<Pick<Database["public"]["Tables"]["qr_codes"]["Row"], "id">> | null;
+  };
+
+  const { data: recentScans } = (await qrCodeScansTable
     .select("scanned_at")
     .in(
       "qr_code_id",
-      (await supabaseAdmin
-        .from("qr_codes")
-        .select("id")
-        .eq("user_id", userId)
-        .neq("status", "DELETED")).data?.map((qr) => qr.id) ?? []
+      userQrCodes?.map((qr) => qr.id) ?? []
     )
-    .gte("scanned_at", sixtyDaysAgo.toISOString());
+    .gte("scanned_at", sixtyDaysAgo.toISOString())) as {
+    data: Array<Pick<Database["public"]["Tables"]["qr_code_scans"]["Row"], "scanned_at">> | null;
+  };
 
   const thisMonth = recentScans?.filter(
     (s) => new Date(s.scanned_at) >= thirtyDaysAgo
@@ -202,12 +208,14 @@ export async function getBusinessCards(
     return cards.map((card) => ({ ...card, visits: 0 }));
   }
 
-  const { data: qrRecords } = await supabaseAdmin
-    .from("qr_codes")
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const { data: qrRecords } = (await qrCodesTable
     .select("content, scans")
     .eq("user_id", userId)
     .eq("type", "BUSINESS_CARD")
-    .in("content", publicUrls);
+    .in("content", publicUrls)) as {
+    data: Array<Pick<Database["public"]["Tables"]["qr_codes"]["Row"], "content" | "scans">> | null;
+  };
 
   const scansByUrl = new Map(
     (qrRecords ?? []).map((record) => [record.content, record.scans ?? 0])
@@ -250,19 +258,23 @@ export async function getRestaurants(
   const restaurants = data as Restaurant[];
   const enriched = await Promise.all(
     restaurants.map(async (r) => {
-      const { count: categories } = await supabaseAdmin
-        .from("menu_categories")
+      const menuCategoriesTable = supabaseAdmin.from("menu_categories") as any;
+      const menuItemsTable = supabaseAdmin.from("menu_items") as any;
+
+      const { count: categories } = await menuCategoriesTable
         .select("*", { count: "exact", head: true })
         .eq("restaurant_id", r.id);
 
-      const { count: items } = await supabaseAdmin
-        .from("menu_items")
+      const { data: categoryIds } = (await menuCategoriesTable
+        .select("id")
+        .eq("restaurant_id", r.id)) as {
+        data: Array<Pick<Database["public"]["Tables"]["menu_categories"]["Row"], "id">> | null;
+      };
+
+      const { count: items } = await menuItemsTable
         .select("*", { count: "exact", head: true })
-        .eq("category_id",
-          (await supabaseAdmin
-            .from("menu_categories")
-            .select("id")
-            .eq("restaurant_id", r.id)).data?.map((c) => c.id) ?? []
+        .in("category_id",
+          categoryIds?.map((c) => c.id) ?? []
         );
 
       return { ...r, categories: categories ?? 0, items: items ?? 0 };

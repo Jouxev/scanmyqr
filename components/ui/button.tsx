@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -43,28 +44,18 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading, children, ...props }, ref) => {
-    // When asChild=true, render children directly so the parent Slot can merge onto it.
-    // Avoid using Radix Slot here — it would nest Slots and fail with multiple children.
-    if (asChild) {
-      return (
-        <div
-          className={cn(buttonVariants({ variant, size, className }), "inline-flex items-center")}
-          ref={ref as React.Ref<HTMLDivElement>}
-          {...props}
-        >
-          {children}
-        </div>
-      );
-    }
+  ({ className, variant, size, asChild = false, loading, children, disabled, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+
     return (
-      <button
+      <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        disabled={loading || props.disabled}
+        aria-disabled={asChild && (loading || disabled) ? true : undefined}
+        disabled={asChild ? undefined : loading || disabled}
         {...props}
       >
-        {loading && (
+        {!asChild && loading && (
           <svg
             className="h-4 w-4 animate-spin"
             xmlns="http://www.w3.org/2000/svg"
@@ -87,7 +78,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
-      </button>
+      </Comp>
     );
   }
 );

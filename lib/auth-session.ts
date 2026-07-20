@@ -55,6 +55,6 @@ export async function getAppSession(request?: Request): Promise<AppSession | nul
       email: toStringOrNull(token.email),
       image: toStringOrNull(token.picture),
     },
-    expires: token.exp ? new Date(token.exp * 1000).toISOString() : "",
+    expires: typeof token.exp === "number" ? new Date(token.exp * 1000).toISOString() : "",
   };
 }
