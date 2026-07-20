@@ -181,7 +181,7 @@ export default function FeaturesPage() {
             Ready to Get Started?
           </h2>
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of businesses using QRHub to create, manage, and
+            Join thousands of businesses using TiptapCard to create, manage, and
             track their QR codes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

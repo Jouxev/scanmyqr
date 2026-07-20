@@ -88,7 +88,7 @@ export default function ContactPage() {
                     <div>
                       <div className="font-medium">Email</div>
                       <div className="text-muted-foreground">
-                        support@qrhub.app
+                        support@tiptapcard.com
                       </div>
                     </div>
                   </div>

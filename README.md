@@ -1,4 +1,4 @@
-# QRHub - Modern QR Code Platform
+# TiptapCard - Modern QR Code Platform
 
 A comprehensive, production-ready QR code management platform built with Next.js 15, TypeScript, and modern web technologies.
 
@@ -74,7 +74,7 @@ npm run dev
 ## Project Structure
 
 ```
-qrhub/
+tiptapcard/
 ├── app/                    # Next.js app router
 │   ├── api/               # API routes
 │   ├── dashboard/        # Dashboard pages
@@ -165,7 +165,7 @@ This project is licensed under the MIT License.
 
 ## Support
 
-For support, email support@qrhub.app or join our Discord community.
+For support, email support@tiptapcard.com or join our Discord community.
 
 ## Roadmap
 

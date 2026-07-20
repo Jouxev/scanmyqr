@@ -14,9 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QRHub - Create & Manage QR Codes",
+  title: "TiptapCard - Create & Manage QR Codes",
+  applicationName: "TiptapCard",
   description:
-    "QRHub is the all-in-one QR code platform for modern businesses. Create, manage, and track QR codes with powerful analytics and customization options.",
+    "TiptapCard is the all-in-one QR code platform for modern businesses. Create, manage, and track QR codes with powerful analytics and customization options.",
   keywords: [
     "QR code",
     "QR generator",
@@ -26,21 +27,29 @@ export const metadata: Metadata = {
     "business card",
     "restaurant menu",
   ],
-  authors: [{ name: "QRHub" }],
+  authors: [{ name: "TiptapCard" }],
   openGraph: {
-    title: "QRHub - Create & Manage QR Codes",
+    title: "TiptapCard - Create & Manage QR Codes",
     description:
       "The all-in-one QR code platform for modern businesses. Create, manage, and track QR codes with powerful analytics.",
-    url: "https://qrhub.app",
-    siteName: "QRHub",
+    url: "https://tiptapcard.com",
+    siteName: "TiptapCard",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "QRHub - Create & Manage QR Codes",
+    title: "TiptapCard - Create & Manage QR Codes",
     description:
       "The all-in-one QR code platform for modern businesses. Create, manage, and track QR codes.",
+  },
+  icons: {
+    icon: [
+      { url: "/brand/tiptap-icon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: [{ url: "/brand/tiptap-icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/brand/tiptap-icon.svg", type: "image/svg+xml" }],
   },
   robots: {
     index: true,

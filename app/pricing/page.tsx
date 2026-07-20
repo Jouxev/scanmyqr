@@ -86,9 +86,9 @@ const faqs = [
       "Your data remains accessible for 30 days after cancellation. After that, it's permanently deleted from our servers. You can export all your data at any time.",
   },
   {
-    question: "Can I use QRHub for commercial purposes?",
+    question: "Can I use TiptapCard for commercial purposes?",
     answer:
-      "Absolutely! QRHub is designed for both personal and commercial use. Pro and Enterprise plans include features specifically for businesses and agencies.",
+      "Absolutely! TiptapCard is designed for both personal and commercial use. Pro and Enterprise plans include features specifically for businesses and agencies.",
   },
 ];
 

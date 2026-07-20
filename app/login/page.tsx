@@ -7,8 +7,9 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { QrCode, Mail, Lock, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,24 +57,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 p-4">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(217,70,239,0.12),transparent_24%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-4">
+      <div className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <QrCode className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold">QRHub</span>
+          <Link href="/" className="mb-6 inline-flex items-center">
+            <TiptapLogo size="md" />
           </Link>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-muted-foreground">
+          <p className="text-slate-500">
             Sign in to your account to continue
           </p>
         </div>
 
-        <Card>
+        <Card className="border-slate-200/80 bg-white/90 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.18)] backdrop-blur-xl">
           <CardContent className="p-6">
             <Button
               variant="outline"
-              className="w-full mb-6"
+              className="mb-6 w-full rounded-xl border-slate-200 bg-white hover:bg-slate-50"
               onClick={handleGoogleSignIn}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -102,7 +103,7 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-white px-2 text-slate-400">
                   Or continue with
                 </span>
               </div>
@@ -136,7 +137,7 @@ export default function LoginPage() {
                   </label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-fuchsia-600 hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -157,27 +158,32 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" loading={isLoading}>
+              <Button
+                type="submit"
+                className="w-full rounded-xl bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500 text-white"
+                loading={isLoading}
+              >
                 Sign in
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="mt-6 text-center text-sm text-slate-500">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary hover:underline font-medium">
+          <Link href="/signup" className="font-medium text-fuchsia-600 hover:underline">
             Sign up
           </Link>
         </p>
 
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mt-4"
+          className="mt-4 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
+      </div>
       </div>
     </div>
   );

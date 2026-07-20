@@ -4,9 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Menu, X, QrCode } from "lucide-react";
+import { ChevronRight, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 const navItems = [
   { href: "/features", label: "Features" },
@@ -20,34 +21,31 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative">
-                <QrCode className="h-8 w-8 text-primary" />
-              </div>
-              <span className="text-xl font-bold">QRHub</span>
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/88 backdrop-blur-xl">
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex h-[72px] items-center justify-between gap-6 py-4">
+          <div className="flex items-center gap-10">
+            <Link href="/" className="flex items-center">
+              <TiptapLogo size="sm" />
             </Link>
 
-            <div className="hidden md:flex md:gap-6">
+            <div className="hidden md:flex md:items-center md:gap-7">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-primary relative py-1",
+                    "relative py-1 text-sm font-medium transition-colors hover:text-slate-950",
                     pathname === item.href
-                      ? "text-primary"
-                      : "text-muted-foreground"
+                      ? "text-slate-950"
+                      : "text-slate-500"
                   )}
                 >
                   {item.label}
                   {pathname === item.href && (
                     <motion.div
                       layoutId="navbar-indicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500"
                       transition={{ type: "spring", stiffness: 350, damping: 30 }}
                     />
                   )}
@@ -56,20 +54,28 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link href="/login" className="hidden md:block">
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl px-4 text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+              >
                 Log in
               </Button>
             </Link>
             <Link href="/signup" className="hidden md:block">
-              <Button size="sm" className="shadow-lg shadow-primary/25">
+              <Button
+                size="sm"
+                className="rounded-xl bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500 px-5 text-white shadow-lg shadow-blue-500/20"
+              >
                 Get Started
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </Link>
 
             <button
-              className="md:hidden"
+              className="rounded-xl border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-50 md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? (
@@ -85,17 +91,17 @@ export default function Navbar() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden py-4 space-y-2"
+            className="space-y-2 border-t border-slate-200 py-4 md:hidden"
           >
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "block px-3 py-2 text-base font-medium rounded-lg transition-colors",
+                  "block rounded-xl px-3 py-2 text-base font-medium transition-colors",
                   pathname === item.href
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent"
+                    ? "bg-slate-100 text-slate-950"
+                    : "text-slate-600 hover:bg-slate-50"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -104,12 +110,14 @@ export default function Navbar() {
             ))}
             <div className="pt-4 space-y-2">
               <Link href="/login" className="block">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full rounded-xl border-slate-200">
                   Log in
                 </Button>
               </Link>
               <Link href="/signup" className="block">
-                <Button className="w-full">Get Started</Button>
+                <Button className="w-full rounded-xl bg-gradient-to-r from-blue-500 via-violet-500 to-fuchsia-500 text-white">
+                  Get Started
+                </Button>
               </Link>
             </div>
           </motion.div>

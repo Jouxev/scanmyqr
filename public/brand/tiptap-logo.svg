@@ -1,0 +1,41 @@
+<svg width="640" height="168" viewBox="0 0 640 168" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logo-gradient" x1="18" y1="14" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E88E5"/>
+      <stop offset="0.52" stop-color="#7C4DFF"/>
+      <stop offset="1" stop-color="#F23692"/>
+    </linearGradient>
+    <linearGradient id="logo-card-gradient" x1="408" y1="52" x2="554" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A43CF6"/>
+      <stop offset="1" stop-color="#F23692"/>
+    </linearGradient>
+    <linearGradient id="logo-arrow" x1="59" y1="71" x2="96" y2="107" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8457FF"/>
+      <stop offset="1" stop-color="#1E88E5"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="12" y="10" width="32" height="32" rx="9" fill="url(#logo-gradient)"/>
+  <rect x="18" y="16" width="20" height="20" rx="6" fill="white" fill-opacity="0.9"/>
+  <rect x="50" y="10" width="12" height="48" rx="6" fill="url(#logo-gradient)"/>
+  <rect x="72" y="10" width="32" height="32" rx="9" fill="url(#logo-gradient)"/>
+  <rect x="78" y="16" width="20" height="20" rx="6" fill="white" fill-opacity="0.9"/>
+
+  <rect x="12" y="52" width="32" height="32" rx="9" fill="url(#logo-gradient)"/>
+  <rect x="18" y="58" width="20" height="20" rx="6" fill="white" fill-opacity="0.9"/>
+  <rect x="72" y="52" width="12" height="52" rx="6" fill="url(#logo-gradient)"/>
+  <rect x="92" y="52" width="12" height="24" rx="6" fill="url(#logo-gradient)"/>
+  <rect x="12" y="94" width="32" height="24" rx="9" fill="url(#logo-gradient)"/>
+  <rect x="50" y="70" width="12" height="26" rx="6" fill="url(#logo-gradient)"/>
+  <rect x="92" y="86" width="22" height="12" rx="6" fill="url(#logo-gradient)"/>
+
+  <circle cx="56" cy="18" r="4" fill="url(#logo-gradient)"/>
+  <circle cx="56" cy="108" r="4" fill="url(#logo-gradient)"/>
+  <circle cx="110" cy="20" r="4" fill="url(#logo-gradient)"/>
+  <circle cx="110" cy="108" r="4" fill="url(#logo-gradient)"/>
+
+  <path d="M58 70L95 84L80 89L75 104L58 70Z" fill="url(#logo-arrow)"/>
+
+  <text x="138" y="88" fill="#0F172A" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900" letter-spacing="-2.5">Tiptap</text>
+  <text x="405" y="88" fill="url(#logo-card-gradient)" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900" letter-spacing="-2.5">Card</text>
+</svg>

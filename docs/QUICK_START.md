@@ -1,4 +1,4 @@
-# 🚀 QRHub Quick Start Guide
+# 🚀 TiptapCard Quick Start Guide
 
 ## Current Status
 

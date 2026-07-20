@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { getInitials } from "@/lib/utils";
+import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 const sidebarLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -62,7 +63,7 @@ export default function DashboardLayout({
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const userName = session?.user?.name || "Creator";
-  const userEmail = session?.user?.email || "creator@qrhub.app";
+  const userEmail = session?.user?.email || "creator@tiptapcard.com";
 
   return (
     <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-50">
@@ -92,13 +93,13 @@ export default function DashboardLayout({
       >
         <div className="flex h-20 items-center justify-between border-b border-white/10 px-6">
           <Link href="/dashboard" className="group flex items-center gap-3">
-            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-600 shadow-lg shadow-blue-950/60">
-              <QrCode className="h-6 w-6 text-white" />
-              <div className="absolute inset-0 rounded-2xl bg-white/10 opacity-0 transition-opacity group-hover:opacity-100" />
-            </div>
             <div>
-              <p className="text-lg font-semibold tracking-tight text-white">QRHub</p>
-              <p className="text-xs text-slate-400">Performance command center</p>
+              <TiptapLogo
+                size="sm"
+                wordmarkClassName="text-white"
+                className="drop-shadow-[0_10px_30px_rgba(59,130,246,0.25)]"
+              />
+              <p className="mt-1 text-xs text-slate-400">Performance command center</p>
             </div>
           </Link>
           <button

@@ -19,8 +19,9 @@ import {
   Sparkles,
   Twitter,
 } from "lucide-react";
+
 import { RiTiktokLine } from "react-icons/ri";
-import { FaViber, FaSnapchat, FaTelegramPlane, FaWhatsapp, FaYoutube, FaGlobe } from "react-icons/fa";
+import { FaStar , FaViber, FaSnapchat, FaTelegramPlane, FaWhatsapp, FaYoutube, FaGlobe } from "react-icons/fa";
 export type BusinessCardTemplateId =
   | "executive"
   | "aurora"
@@ -420,11 +421,19 @@ function ExecutiveTemplate({
           data={data}
           compact={compact}
           className={`mx-auto flex items-center justify-center overflow-hidden rounded-full border-4 border-black/70 font-black text-black shadow-[0_0_0_4px_rgba(255,255,255,0.15)] ${
-            compact ? "h-16 w-16 text-lg" : "h-24 w-24 text-2xl sm:h-28 sm:w-28 sm:text-3xl"
+            compact ? "h-20 w-20 text-xl" : "h-28 w-28 text-3xl sm:h-42 sm:w-42 sm:text-4xl"
           }`}
-          imageClassName="h-full w-full object-cover"
+          imageClassName="h-full w-full object-st"
         />
-
+        { /* stars */}
+        <div className="mx-auto flex items-center justify-center gap-2 mt-4">
+        <FaStar className="h-7 w-7 text-amber-400" /> 
+        <FaStar className="h-7 w-7 text-amber-400" /> 
+        <FaStar className="h-7 w-7 text-amber-400" /> 
+        <FaStar className="h-7 w-7 text-amber-400" /> 
+        <FaStar className="h-7 w-7 text-amber-400" /> 
+      
+        </div>
         <h2 className={`mt-5 font-black uppercase tracking-tight ${titleSize}`}>
           {data.name || "Your Business Name"}
         </h2>
@@ -593,7 +602,7 @@ function AuroraTemplate({
               data={data}
               compact={compact}
               className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-white/15 bg-white/10 font-bold text-white ${
-                compact ? "h-14 w-14 text-sm" : "h-40 w-40 text-xl"
+                compact ? "h-[72px] w-[72px] text-base" : "h-48 w-48 text-2xl"
               }`}
               imageClassName="h-full w-full object-cover"
             />
@@ -701,7 +710,7 @@ function MinimalTemplate({
             data={data}
             compact={compact}
             className={`mb-4 flex items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 text-center font-semibold ${
-              compact ? "h-14 w-14 text-sm" : "h-20 w-20 text-xl"
+              compact ? "h-[72px] w-[72px] text-base" : "h-28 w-28 text-2xl"
             }`}
             imageClassName="h-full w-full object-cover"
           />

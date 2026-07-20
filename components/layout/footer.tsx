@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { QrCode, Github, Twitter, Linkedin } from "lucide-react";
+import { Github, Twitter, Linkedin } from "lucide-react";
+import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 const footerLinks = {
   product: [
@@ -36,16 +37,16 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-muted/50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+    <footer className="border-t border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <QrCode className="h-8 w-8 text-primary" />
-              <span className="text-xl font-bold">QRHub</span>
+            <Link href="/" className="mb-5 inline-flex items-center">
+              <TiptapLogo size="md" />
             </Link>
-            <p className="text-sm text-muted-foreground mb-6">
-              Create, manage, and track QR codes with ease. The all-in-one QR code platform for modern businesses.
+            <p className="mb-6 max-w-xs text-sm leading-6 text-slate-600">
+              Create, launch, and track beautifully branded QR experiences for business cards,
+              smart menus, and modern campaigns.
             </p>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
@@ -54,7 +55,7 @@ export default function Footer() {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:text-slate-950"
                 >
                   <social.icon className="h-5 w-5" />
                 </a>
@@ -63,13 +64,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Product</h3>
+            <h3 className="mb-4 font-semibold text-slate-950">Product</h3>
             <ul className="space-y-2">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-slate-600 transition-colors hover:text-slate-950"
                   >
                     {link.label}
                   </Link>
@@ -79,13 +80,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Company</h3>
+            <h3 className="mb-4 font-semibold text-slate-950">Company</h3>
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-slate-600 transition-colors hover:text-slate-950"
                   >
                     {link.label}
                   </Link>
@@ -95,13 +96,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Resources</h3>
+            <h3 className="mb-4 font-semibold text-slate-950">Resources</h3>
             <ul className="space-y-2">
               {footerLinks.resources.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-slate-600 transition-colors hover:text-slate-950"
                   >
                     {link.label}
                   </Link>
@@ -111,13 +112,13 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
+            <h3 className="mb-4 font-semibold text-slate-950">Legal</h3>
             <ul className="space-y-2">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-slate-600 transition-colors hover:text-slate-950"
                   >
                     {link.label}
                   </Link>
@@ -127,8 +128,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} QRHub. All rights reserved.</p>
+        <div className="mt-12 border-t border-slate-200 pt-8 text-center text-sm text-slate-500">
+          <p>&copy; {new Date().getFullYear()} TiptapCard. All rights reserved.</p>
         </div>
       </div>
     </footer>

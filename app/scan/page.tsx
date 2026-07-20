@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QrScanner from "qr-scanner";
+import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 export default function ScanPage() {
   const router = useRouter();
@@ -321,28 +322,23 @@ export default function ScanPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_28%),radial-gradient(circle_at_top_right,rgba(217,70,239,0.12),transparent_24%),linear-gradient(180deg,#ffffff_0%,#eff6ff_100%)] dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 z-50">
+      <nav className="fixed top-0 z-50 w-full border-b border-slate-200/70 bg-white/85 backdrop-blur-xl dark:border-gray-700/50 dark:bg-gray-900/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <button 
                 onClick={() => router.push('/')}
-                className="flex items-center space-x-2 group"
+                className="group flex items-center space-x-2"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">QR</span>
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  ScanMyQR
-                </span>
+                <TiptapLogo size="sm" />
               </button>
             </div>
             
             <button 
               onClick={() => router.push('/')}
-              className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm transition-colors hover:bg-slate-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
             >
               Back to Home
             </button>
