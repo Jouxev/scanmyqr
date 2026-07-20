@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAppSession } from "@/lib/auth-session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
@@ -18,12 +19,12 @@ export async function GET(request: Request) {
 
     const userId = (session.user as any).id;
 
-    const { data: qrCode } = await supabaseAdmin
-      .from("qr_codes")
+    const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+    const { data: qrCode } = (await qrCodesTable
       .select("id")
       .eq("id", qrCodeId)
       .eq("user_id", userId)
-      .single();
+      .single()) as { data: Pick<Database["public"]["Tables"]["qr_codes"]["Row"], "id"> | null };
 
     if (!qrCode) {
       return NextResponse.json({ message: "QR code not found" }, { status: 404 });

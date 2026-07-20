@@ -9,7 +9,12 @@ export default async function MenusPage() {
 
   const userId = (session.user as any).id;
   const restaurants = await getRestaurants(userId);
+  const initialRestaurants = restaurants.map((restaurant) => ({
+    ...restaurant,
+    categories: restaurant.categories ?? 0,
+    items: restaurant.items ?? 0,
+  }));
 
-  return <MenusClient initialRestaurants={restaurants} />;
+  return <MenusClient initialRestaurants={initialRestaurants} />;
 }
 

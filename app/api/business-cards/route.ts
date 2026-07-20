@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { getAppSession } from "@/lib/auth-session";
 import { getBusinessCards } from "@/lib/dashboard-data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
@@ -82,44 +83,45 @@ export async function POST(request: Request) {
       ...(cleanString(body?.viber) ? { viber: cleanString(body?.viber) } : {}),
       ...(cleanString(body?.googleMaps) ? { googleMaps: cleanString(body?.googleMaps) } : {}),
     };
+    const businessCardInsert: Database["public"]["Tables"]["business_cards"]["Insert"] = {
+      user_id: (session.user as any).id,
+      slug,
+      name,
+      title: cleanString(body?.title),
+      company: cleanString(body?.company),
+      bio: cleanString(body?.bio),
+      email: cleanString(body?.email),
+      phone: cleanString(body?.phone),
+      website: cleanString(body?.website),
+      address: cleanString(body?.address),
+      avatar_url: cleanString(body?.avatarUrl),
+      linkedin: cleanString(body?.linkedin),
+      twitter: cleanString(body?.twitter),
+      facebook: cleanString(body?.facebook),
+      instagram: cleanString(body?.instagram),
+      github: cleanString(body?.github),
+      tiktok: cleanString(body?.tiktok),
+      youtube: cleanString(body?.youtube),
+      whatsapp: cleanString(body?.whatsapp),
+      telegram: cleanString(body?.telegram),
+      custom_links: Object.keys(customLinks).length > 0 ? customLinks : null,
+      theme,
+      font_family: fontFamily,
+      primary_color: primaryColor,
+      background_color: backgroundColor,
+      status:
+        body?.status === "DRAFT" ||
+        body?.status === "PUBLISHED" ||
+        body?.status === "ARCHIVED"
+          ? body.status
+          : "PUBLISHED",
+      is_public: body?.isPublic !== false,
+      qr_code_url: publicUrl,
+    };
 
-    const { data: businessCard, error } = await supabaseAdmin
-      .from("business_cards")
-      .insert({
-        user_id: (session.user as any).id,
-        slug,
-        name,
-        title: cleanString(body?.title),
-        company: cleanString(body?.company),
-        bio: cleanString(body?.bio),
-        email: cleanString(body?.email),
-        phone: cleanString(body?.phone),
-        website: cleanString(body?.website),
-        address: cleanString(body?.address),
-        avatar_url: cleanString(body?.avatarUrl),
-        linkedin: cleanString(body?.linkedin),
-        twitter: cleanString(body?.twitter),
-        facebook: cleanString(body?.facebook),
-        instagram: cleanString(body?.instagram),
-        github: cleanString(body?.github),
-        tiktok: cleanString(body?.tiktok),
-        youtube: cleanString(body?.youtube),
-        whatsapp: cleanString(body?.whatsapp),
-        telegram: cleanString(body?.telegram),
-        custom_links: Object.keys(customLinks).length > 0 ? customLinks : null,
-        theme,
-        font_family: fontFamily,
-        primary_color: primaryColor,
-        background_color: backgroundColor,
-        status:
-          body?.status === "DRAFT" ||
-          body?.status === "PUBLISHED" ||
-          body?.status === "ARCHIVED"
-            ? body.status
-            : "PUBLISHED",
-        is_public: body?.isPublic !== false,
-        qr_code_url: publicUrl,
-      })
+    const businessCardsTable = supabaseAdmin.from("business_cards") as any;
+    const { data: businessCard, error } = await businessCardsTable
+      .insert([businessCardInsert])
       .select()
       .single();
 
@@ -131,7 +133,7 @@ export async function POST(request: Request) {
     }
 
     const qrShortCode = randomUUID().replace(/-/g, "").slice(0, 12);
-    const { error: qrError } = await supabaseAdmin.from("qr_codes").insert({
+    const qrCodeInsert: Database["public"]["Tables"]["qr_codes"]["Insert"] = {
       user_id: (session.user as any).id,
       name: `${name} Business Card`,
       type: "BUSINESS_CARD",
@@ -143,7 +145,9 @@ export async function POST(request: Request) {
       status: "ACTIVE",
       foreground_color: primaryColor,
       background_color: backgroundColor,
-    });
+    };
+    const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+    const { error: qrError } = await qrCodesTable.insert([qrCodeInsert]);
 
     if (qrError) {
       return NextResponse.json(

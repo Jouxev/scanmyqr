@@ -4,6 +4,7 @@ import { ArrowUpRight, Copy, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 
 interface PageProps {
   params: Promise<{ code: string }>;
@@ -21,12 +22,17 @@ function getActionHref(type: string, content: string) {
 export default async function QRCodeViewPage({ params }: PageProps) {
   const { code } = await params;
 
-  const { data: qrCode } = await supabaseAdmin
-    .from("qr_codes")
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const { data: qrCode } = (await qrCodesTable
     .select("name, type, content, short_code")
     .eq("short_code", code)
     .eq("is_active", true)
-    .single();
+    .single()) as {
+    data: Pick<
+      Database["public"]["Tables"]["qr_codes"]["Row"],
+      "name" | "type" | "content" | "short_code"
+    > | null;
+  };
 
   if (!qrCode) {
     notFound();

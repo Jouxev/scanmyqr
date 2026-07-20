@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAppSession } from "@/lib/auth-session";
 import { deleteQRCode } from "@/lib/dashboard-data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 
 export async function DELETE(
   request: Request,
@@ -71,9 +72,18 @@ export async function PUT(
       );
     }
 
-    const { data, error } = await supabaseAdmin
-      .from("qr_codes")
-      .update(updates)
+    const qrCodeUpdate: Database["public"]["Tables"]["qr_codes"]["Update"] = {
+      name: updates.name,
+      content: updates.content,
+      type: updates.type,
+      foreground_color: updates.foreground_color,
+      background_color: updates.background_color,
+      status: updates.status,
+      is_active: updates.is_active,
+    };
+    const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+    const { data, error } = await qrCodesTable
+      .update(qrCodeUpdate)
       .eq("id", id)
       .eq("user_id", userId)
       .select("*")

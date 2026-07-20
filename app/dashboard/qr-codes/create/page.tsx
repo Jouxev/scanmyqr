@@ -141,7 +141,7 @@ export default function CreateQRCodePage() {
       });
       setQrImage(canvas.toDataURL("image/png"));
     } catch (_error) {
-      console.error("Error generating QR code:", error);
+      console.error("Error generating QR code:", _error);
     } finally {
       setIsGenerating(false);
     }

@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
 import {
   ArrowUpRight,
   ExternalLink,
@@ -141,7 +140,7 @@ export const businessCardTemplates: BusinessCardTemplateMeta[] = [
 type SocialItem = {
   href: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<{ className?: string }>;
   monogram?: string;
 };
 
@@ -261,7 +260,7 @@ function getSocialItems(data: BusinessCardTemplateData): SocialItem[] {
     key: string;
     label: string;
     raw: string | null | undefined;
-    icon?: LucideIcon;
+    icon?: ComponentType<{ className?: string }>;
     monogram?: string;
   }> = [
     { key: "facebook", label: "Facebook", raw: data.facebook, icon: Facebook },

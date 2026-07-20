@@ -10,6 +10,7 @@ import type {
   Restaurant,
   Folder,
 } from "@/types/models";
+import type { Database } from "@/types/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -302,9 +303,14 @@ export async function getFolders(userId: string): Promise<Folder[]> {
 // ─── Create / Update / Delete ────────────────────────────────────────────────
 
 export async function createFolder(userId: string, name: string, color?: string) {
-  const { data, error } = await supabaseAdmin
-    .from("folders")
-    .insert({ user_id: userId, name, color })
+  const foldersTable = supabaseAdmin.from("folders") as any;
+  const folderInsert: Database["public"]["Tables"]["folders"]["Insert"] = {
+    user_id: userId,
+    name,
+    color,
+  };
+  const { data, error } = await foldersTable
+    .insert([folderInsert])
     .select()
     .single();
   if (error) throw error;
@@ -313,9 +319,12 @@ export async function createFolder(userId: string, name: string, color?: string)
 
 export async function deleteFolder(folderId: string) {
   // Clear folder_id from QR codes first
-  await supabaseAdmin
-    .from("qr_codes")
-    .update({ folder_id: null })
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const clearFolderUpdate: Database["public"]["Tables"]["qr_codes"]["Update"] = {
+    folder_id: null,
+  };
+  await qrCodesTable
+    .update(clearFolderUpdate)
     .eq("folder_id", folderId);
 
   const { error } = await supabaseAdmin
@@ -327,9 +336,12 @@ export async function deleteFolder(folderId: string) {
 }
 
 export async function deleteQRCode(qrId: string) {
-  const { error } = await supabaseAdmin
-    .from("qr_codes")
-    .update({ status: "DELETED" })
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const deleteUpdate: Database["public"]["Tables"]["qr_codes"]["Update"] = {
+    status: "DELETED",
+  };
+  const { error } = await qrCodesTable
+    .update(deleteUpdate)
     .eq("id", qrId);
   if (error) throw error;
   return { success: true };
@@ -355,17 +367,15 @@ export async function deleteRestaurant(restaurantId: string) {
 }
 
 export async function duplicateQRCode(qrId: string, userId: string) {
-  const { data: original } = await supabaseAdmin
-    .from("qr_codes")
+  const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+  const { data: original } = (await qrCodesTable
     .select("*")
     .eq("id", qrId)
-    .single();
+    .single()) as { data: Database["public"]["Tables"]["qr_codes"]["Row"] | null };
 
   if (!original) throw new Error("QR code not found");
 
-  const { data, error } = await supabaseAdmin
-    .from("qr_codes")
-    .insert({
+  const qrCodeInsert: Database["public"]["Tables"]["qr_codes"]["Insert"] = {
       user_id: userId,
       name: `${original.name} (copy)`,
       type: original.type,
@@ -378,7 +388,9 @@ export async function duplicateQRCode(qrId: string, userId: string) {
       eye_style: original.eye_style,
       logo_url: original.logo_url,
       download_format: original.download_format,
-    })
+    };
+  const { data, error } = await qrCodesTable
+    .insert([qrCodeInsert])
     .select()
     .single();
 

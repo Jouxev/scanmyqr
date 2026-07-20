@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-img-element */
 'use client';
 
 import { useState, useRef, useEffect } from "react";
@@ -56,7 +56,7 @@ export default function ScanPage() {
       html5QrRef.current = html5Qr;
 
       // Check for front/back camera
-      const devices = await Html5Qr.getCameras();
+      const devices = await Html5Qrcode.getCameras();
       let cameraId = "";
       if (devices && devices.length > 0) {
         // Prefer back camera
@@ -84,15 +84,7 @@ export default function ScanPage() {
           // decode error — silently ignore (expected when no QR visible)
         }
       );
-
-      // Store stream for flash/switch controls
-      const stream = html5Qr.getRunningTrackCameraCapabilities
-        ? undefined
-        : undefined;
-      void stream;
-
       setCameraActive(true);
-      setIsScanning(true);
     } catch (error: any) {
       console.error("Error starting QR scanner:", error);
       if (error?.message?.includes("permission")) {
@@ -111,7 +103,6 @@ export default function ScanPage() {
   };
 
   const stopCamera = async () => {
-    setIsScanning(false);
     setCameraActive(false);
     if (html5QrRef.current) {
       try {
@@ -131,9 +122,10 @@ export default function ScanPage() {
     if (!html5QrRef.current) return;
     try {
       const capabilities = html5QrRef.current.getRunningTrackCameraCapabilities();
-      if (capabilities?.torchFeature?.isSupported()) {
+      const torchFeature = capabilities?.torchFeature?.();
+      if (torchFeature?.isSupported()) {
         const newState = !isFlashOn;
-        await capabilities.torchFeature.apply(newState);
+        await torchFeature.apply(newState);
         setIsFlashOn(newState);
       }
     } catch (error) {
@@ -144,7 +136,7 @@ export default function ScanPage() {
   const switchCamera = async () => {
     if (!html5QrRef.current) return;
     try {
-      const devices = await Html5Qr.getCameras();
+      const devices = await Html5Qrcode.getCameras();
       if (!devices || devices.length < 2) return;
 
       const currentId = devices[0].id;
@@ -163,7 +155,6 @@ export default function ScanPage() {
         () => {}
       );
       setCameraActive(true);
-      setIsScanning(true);
       setIsFlashOn(false);
     } catch (error) {
       console.error("Error switching camera:", error);

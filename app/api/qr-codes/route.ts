@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { getAppSession } from "@/lib/auth-session";
 import { getQRCodes } from "@/lib/dashboard-data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import type { Database } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
@@ -54,27 +55,28 @@ export async function POST(request: Request) {
     }
 
     const shortCode = randomUUID().replace(/-/g, "").slice(0, 12);
-    const { data: qrCode, error } = await supabaseAdmin
-      .from("qr_codes")
-      .insert({
-        user_id: (session.user as any).id,
-        name,
-        type,
-        content,
-        short_code: shortCode,
-        dynamic: false,
-        is_active: true,
-        status: "ACTIVE",
-        scans: 0,
-        foreground_color:
-          typeof body?.foregroundColor === "string" && body.foregroundColor.trim()
-            ? body.foregroundColor
-            : "#000000",
-        background_color:
-          typeof body?.backgroundColor === "string" && body.backgroundColor.trim()
-            ? body.backgroundColor
-            : "#ffffff",
-      })
+    const qrCodeInsert: Database["public"]["Tables"]["qr_codes"]["Insert"] = {
+      user_id: (session.user as any).id,
+      name,
+      type,
+      content,
+      short_code: shortCode,
+      dynamic: false,
+      is_active: true,
+      status: "ACTIVE",
+      scans: 0,
+      foreground_color:
+        typeof body?.foregroundColor === "string" && body.foregroundColor.trim()
+          ? body.foregroundColor
+          : "#000000",
+      background_color:
+        typeof body?.backgroundColor === "string" && body.backgroundColor.trim()
+          ? body.backgroundColor
+          : "#ffffff",
+    };
+    const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+    const { data: qrCode, error } = await qrCodesTable
+      .insert([qrCodeInsert])
       .select()
       .single();
 
@@ -91,4 +93,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
-

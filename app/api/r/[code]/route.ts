@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { UAParser } from "ua-parser-js";
+import type { Database } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
@@ -11,12 +12,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Short code is required" }, { status: 400 });
     }
 
-    const { data: qrCode } = await supabaseAdmin
-      .from("qr_codes")
+    const qrCodesTable = supabaseAdmin.from("qr_codes") as any;
+    const { data: qrCode } = (await qrCodesTable
       .select("id, content, type, name, user_id")
       .eq("short_code", shortCode)
       .eq("is_active", true)
-      .single();
+      .single()) as {
+      data: { id: string; content: string; type: string; name: string; user_id: string } | null;
+    };
 
     if (!qrCode) {
       return NextResponse.json({ message: "QR code not found" }, { status: 404 });
@@ -37,31 +40,33 @@ export async function GET(request: Request) {
     }
 
     // Create scan record
-    const { data: scan } = await supabaseAdmin
-      .from("qr_code_scans")
-      .insert({
-        qr_code_id: qrCode.id,
-        ip_address: ip,
-        user_agent: userAgent,
-        device: result.device.type || "desktop",
-        browser: result.browser.name || "Unknown",
-        os: result.os.name ? `${result.os.name} ${result.os.version || ""}`.trim() : "Unknown",
-        country: geo?.country || null,
-        city: geo?.city || null,
-      })
+    const qrCodeScansTable = supabaseAdmin.from("qr_code_scans") as any;
+    const scanInsert: Database["public"]["Tables"]["qr_code_scans"]["Insert"] = {
+      qr_code_id: qrCode.id,
+      ip_address: ip,
+      user_agent: userAgent,
+      device: result.device.type || "desktop",
+      browser: result.browser.name || "Unknown",
+      os: result.os.name ? `${result.os.name} ${result.os.version || ""}`.trim() : "Unknown",
+      country: geo?.country || null,
+      city: geo?.city || null,
+    };
+    const { data: scan } = await qrCodeScansTable
+      .insert([scanInsert])
       .select()
       .single();
 
     // Increment scan count on QR code
-    const { data: updated } = await supabaseAdmin
-      .from("qr_codes")
+    const { data: updated } = (await qrCodesTable
       .select("scans")
       .eq("id", qrCode.id)
-      .single();
+      .single()) as { data: { scans: number | null } | null };
 
-    await supabaseAdmin
-      .from("qr_codes")
-      .update({ scans: (updated?.scans ?? 0) + 1 })
+    const qrCodeUpdate: Database["public"]["Tables"]["qr_codes"]["Update"] = {
+      scans: (updated?.scans ?? 0) + 1,
+    };
+    await qrCodesTable
+      .update(qrCodeUpdate)
       .eq("id", qrCode.id);
 
     return NextResponse.json({

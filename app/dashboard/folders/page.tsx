@@ -9,7 +9,11 @@ export default async function FoldersPage() {
 
   const userId = (session.user as any).id;
   const folders = await getFolders(userId);
+  const initialFolders = folders.map((folder) => ({
+    ...folder,
+    qrCount: folder.qrCount ?? 0,
+  }));
 
-  return <FoldersClient initialFolders={folders} />;
+  return <FoldersClient initialFolders={initialFolders} />;
 }
 
