@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import QrScanner from "qr-scanner";
+import { Html5Qrcode } from "html5-qrcode";
 import { TiptapLogo } from "@/components/brand/tiptap-logo";
 
 export default function ScanPage() {
@@ -14,311 +14,217 @@ export default function ScanPage() {
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState<boolean>(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const html5QrRef = useRef<Html5Qrcode | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Camera functions
   const startCamera = async () => {
     setIsRequestingPermission(true);
-    
+
     // Check if we're in a secure context (HTTPS or localhost)
-    const isSecureContext = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    
-    console.log(isSecureContext)
+    const isSecureContext =
+      window.isSecureContext ||
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1";
+
     if (!isSecureContext) {
-      alert('Camera access requires a secure connection (HTTPS) or localhost. Please serve this app over HTTPS or run it on localhost.');
+      alert(
+        "Camera access requires a secure connection (HTTPS) or localhost. Please serve this app over HTTPS or run it on localhost."
+      );
       setHasCameraPermission(false);
       setIsRequestingPermission(false);
-      
-    }else{
-      setHasCameraPermission(true)
+      return;
     }
-    
-    try {
-      console.log('Requesting camera permission...');
-      
-      // For iOS devices, we need to handle camera selection differently
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      let videoConstraints: MediaTrackConstraints = {
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      };
-      
-      if (!isIOS) {
-        // Use environment (back) camera for non-iOS devices
-        videoConstraints.facingMode = 'environment';
-      }
-      // For iOS, let the system choose the default camera (will usually be front)
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: videoConstraints
-      });
-      console.log('Camera permission granted, stream obtained');
-    
-      console.log(cameraActive)
-             setCameraActive(true);
-            
-      console.log(videoRef) 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        
-        // Set up event listeners for the video element
-        // Set state immediately - we have the stream!
-       
 
-        
-        // Try to play the video immediately
-        const playVideo = async () => {
-          // Store the current reference to avoid null issues
-          const videoElement = videoRef.current;
-          if (!videoElement) {
-            console.error('Video element is null - cannot play video');
-            return;
-          }
-          
-          try {
-            await videoElement.play();
-            console.log('Video playing successfully');
-          } catch (error) {
-            console.error('Error playing video:', error);
-            
-            // Fallback: try with event listeners if immediate play fails
-            videoElement.onloadedmetadata = () => {
-              videoElement.play().catch(console.error);
-            };
-          }
-        };
-        
-        playVideo();
+    setHasCameraPermission(true);
+
+    try {
+      // Stop any existing scanner
+      if (html5QrRef.current) {
+        try {
+          await html5QrRef.current.stop();
+        } catch (_) {
+          // ignore
+        }
+        html5QrRef.current = null;
       }
+
+      const html5Qr = new Html5Qrcode("video-container");
+      html5QrRef.current = html5Qr;
+
+      // Check for front/back camera
+      const devices = await Html5Qr.getCameras();
+      let cameraId = "";
+      if (devices && devices.length > 0) {
+        // Prefer back camera
+        const backCamera = devices.find(
+          (d) =>
+            d.label.toLowerCase().includes("back") ||
+            d.label.toLowerCase().includes("rear") ||
+            d.label.toLowerCase().includes("environment")
+        );
+        cameraId = backCamera ? backCamera.id : devices[0].id;
+      }
+
+      await html5Qr.start(
+        cameraId ? { deviceId: { exact: cameraId } } : { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1,
+        },
+        (decodedText) => {
+          setScanResult(decodedText);
+          stopCamera();
+        },
+        () => {
+          // decode error — silently ignore (expected when no QR visible)
+        }
+      );
+
+      // Store stream for flash/switch controls
+      const stream = html5Qr.getRunningTrackCameraCapabilities
+        ? undefined
+        : undefined;
+      void stream;
+
+      setCameraActive(true);
+      setIsScanning(true);
     } catch (error: any) {
-      console.error('Error accessing camera:', error);
-      setHasCameraPermission(false);
-      
-      // Provide specific error messages
-      if (error.name === 'NotAllowedError') {
-        alert('Camera permission denied. Please allow camera access in your browser settings.');
-      } else if (error.name === 'NotFoundError') {
-        alert('No camera found. Please check if your device has a camera.');
-      } else if (error.name === 'NotReadableError') {
-        alert('Camera is already in use by another application.');
+      console.error("Error starting QR scanner:", error);
+      if (error?.message?.includes("permission")) {
+        alert(
+          "Camera permission denied. Please allow camera access in your browser settings."
+        );
+      } else if (error?.message?.includes("No camera")) {
+        alert("No camera found. Please check if your device has a camera.");
       } else {
-        alert('Unable to access camera. Please check your device permissions.');
+        alert("Unable to start camera. Please check your device permissions.");
       }
+      setHasCameraPermission(false);
     } finally {
       setIsRequestingPermission(false);
     }
   };
 
-  const stopCamera = () => {
+  const stopCamera = async () => {
+    setIsScanning(false);
+    setCameraActive(false);
+    if (html5QrRef.current) {
+      try {
+        await html5QrRef.current.stop();
+      } catch (_) {
+        // ignore
+      }
+      html5QrRef.current = null;
+    }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
-      setCameraActive(false);
     }
   };
 
   const toggleFlash = async () => {
-    if (!streamRef.current) return;
-    
+    if (!html5QrRef.current) return;
     try {
-      const videoTrack = streamRef.current.getVideoTracks()[0];
-      if (videoTrack && 'applyConstraints' in videoTrack) {
-        const newFlashState = !isFlashOn;
-        
-        // Try to control flash/torch if supported
-        await videoTrack.applyConstraints({
-          advanced: [{ torch: newFlashState } as any]
-        }).catch(error => {
-          console.log('Flash/torch not supported:', error);
-        });
-        
-        setIsFlashOn(newFlashState);
+      const capabilities = html5QrRef.current.getRunningTrackCameraCapabilities();
+      if (capabilities?.torchFeature?.isSupported()) {
+        const newState = !isFlashOn;
+        await capabilities.torchFeature.apply(newState);
+        setIsFlashOn(newState);
       }
     } catch (error) {
-      console.error('Error toggling flash:', error);
+      console.log("Flash/torch not supported:", error);
     }
   };
 
   const switchCamera = async () => {
-    stopCamera();
+    if (!html5QrRef.current) return;
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      
-      if (videoDevices.length > 1) {
-        // Get current camera settings
-        const currentStream = streamRef.current;
-        const currentTrack = currentStream?.getVideoTracks()[0];
-        const currentSettings = currentTrack?.getSettings();
-        
-        // For iOS, we need to use deviceId instead of facingMode
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        
-        if (isIOS && videoDevices.length >= 2) {
-          // iOS camera switching - find the other camera
-          const currentDeviceId = currentSettings?.deviceId;
-          const otherDevice = videoDevices.find(device => device.deviceId !== currentDeviceId);
-          
-          if (otherDevice) {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-              video: { deviceId: { exact: otherDevice.deviceId } }
-            });
-            
-            if (videoRef.current) {
-              videoRef.current.srcObject = stream;
-              streamRef.current = stream;
-              
-              // Reset flash state when switching cameras
-              setIsFlashOn(false);
-            }
-          }
-        } else {
-          // Standard camera switching for other devices
-          const currentFacingMode = currentSettings?.facingMode;
-          const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-          
-          const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: newFacingMode } 
-          });
-          
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            streamRef.current = stream;
-            
-            // Reset flash state when switching cameras
-            setIsFlashOn(false);
-          }
-        }
-      }
+      const devices = await Html5Qr.getCameras();
+      if (!devices || devices.length < 2) return;
+
+      const currentStream = html5QrRef.current.getRunningTrackCameraCapabilities();
+      // Simple toggle — stop and restart with the other camera
+      const currentId = devices[0].id;
+      const otherId = devices.find((d) => d.id !== currentId)?.id || devices[1].id;
+      await stopCamera();
+      // Re-init with the other camera
+      const html5Qr = new Html5Qrcode("video-container");
+      html5QrRef.current = html5Qr;
+      await html5Qr.start(
+        { deviceId: { exact: otherId } },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+        (decodedText) => {
+          setScanResult(decodedText);
+          stopCamera();
+        },
+        () => {}
+      );
+      setCameraActive(true);
+      setIsScanning(true);
+      setIsFlashOn(false);
     } catch (error) {
-      console.error('Error switching camera:', error);
+      console.error("Error switching camera:", error);
     }
   };
 
   // File upload functions
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Check file type and size
-      if (!file.type.startsWith('image/')) {
-        alert('Please upload an image file');
-        return;
-      }
-      
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        alert('File size must be less than 10MB');
-        return;
-      }
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const imageDataUrl = e.target?.result as string;
-        setUploadedImage(imageDataUrl);
-        
-        // Decode QR code from the uploaded image
-        decodeQRFromImage(imageDataUrl);
-      };
-      reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload an image file");
+      return;
     }
-  };
 
-  const decodeQRFromImage = async (imageDataUrl: string) => {
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File size must be less than 10MB");
+      return;
+    }
+
+    setUploadedImage(URL.createObjectURL(file));
+
     try {
-      // Create an image element to get the image data
-      const img = new Image();
-      img.onload = async () => {
-        try {
-          // Use QrScanner to decode from image
-          const result = await QrScanner.scanImage(img, {
-            returnDetailedScanResult: true,
-          });
-          
-          if (result) {
-            setScanResult(result.data);
-            // Automatically delete the uploaded image after successful scan
-            setUploadedImage(null);
-            if (fileInputRef.current) {
-              fileInputRef.current.value = '';
-            }
-          }
-        } catch (error) {
-          console.error('QR decoding error:', error);
-          alert('No QR code found in the image. Please try another image.');
-          setUploadedImage(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }
-      };
-      img.src = imageDataUrl;
-    } catch (error) {
-      console.error('Image loading error:', error);
-      alert('Error processing the image. Please try another file.');
-      setUploadedImage(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      const html5Qr = new Html5Qrcode("uploaded-image-container");
+      // Decode directly from the file
+      const result = await html5Qr.scanFile(file, false);
+      setScanResult(result);
+    } catch (error: any) {
+      if (error?.message?.includes("No MultiFormat Readers")) {
+        alert("No QR code found in the image. Please try another image.");
+      } else {
+        console.error("QR decoding error:", error);
+        alert("No QR code found in the image. Please try another image.");
       }
+    } finally {
+      setUploadedImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const clearUploadedImage = () => {
     setUploadedImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // QR Code Scanning
-  useEffect(() => {
-    if (cameraActive && videoRef.current && streamRef.current) {
-      const qrScanner = new QrScanner(
-        videoRef.current,
-        (result) => {
-          if (result) {
-            setScanResult(result.data);
-            stopCamera();
-          }
-        },
-        {
-          onDecodeError: (error) => {
-            // Silently handle decode errors - they're expected when no QR is visible
-          },
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          maxScansPerSecond: 5,
-        }
-      );
-
-      // Wait for video to be ready before starting QR scanner
-      const checkVideoReady = () => {
-        if (videoRef.current && videoRef.current.readyState >= 2) {
-          qrScanner.start().catch((error) => {
-            console.error('Error starting QR scanner:', error);
-          });
-        } else {
-          setTimeout(checkVideoReady, 100);
-        }
-      };
-      
-      checkVideoReady();
-
-      return () => {
-        qrScanner.stop();
-        qrScanner.destroy();
-      };
-    }
-  }, [cameraActive]);
-
-  // Clean up camera on unmount
+  // Clean up on unmount
   useEffect(() => {
     return () => {
+      if (html5QrRef.current) {
+        try {
+          html5QrRef.current.stop().catch(() => {});
+        } catch (_) {}
+      }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -328,16 +234,16 @@ export default function ScanPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => router.push('/')}
+              <button
+                onClick={() => router.push("/")}
                 className="group flex items-center space-x-2"
               >
                 <TiptapLogo size="sm" />
               </button>
             </div>
-            
-            <button 
-              onClick={() => router.push('/')}
+
+            <button
+              onClick={() => router.push("/")}
               className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 shadow-sm transition-colors hover:bg-slate-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
             >
               Back to Home
@@ -364,21 +270,21 @@ export default function ScanPage() {
             <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-2xl p-2 border border-gray-200/30 dark:border-gray-700/30">
               <div className="flex space-x-2">
                 <button
-                  onClick={() => setActiveTab('camera')}
+                  onClick={() => setActiveTab("camera")}
                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                    activeTab === 'camera'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
+                    activeTab === "camera"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
                   }`}
                 >
                   Camera Scan
                 </button>
                 <button
-                  onClick={() => setActiveTab('upload')}
+                  onClick={() => setActiveTab("upload")}
                   className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                    activeTab === 'upload'
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'
+                    activeTab === "upload"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                      : "text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
                   }`}
                 >
                   Upload Image
@@ -389,53 +295,57 @@ export default function ScanPage() {
 
           {/* Scanning Content */}
           <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/30 dark:border-gray-700/30">
-            {activeTab === 'camera' ? (
+            {activeTab === "camera" ? (
               <div className="text-center">
                 {/* Camera Preview */}
                 <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-2xl mb-6 flex items-center justify-center relative overflow-hidden">
                   {cameraActive ? (
                     <>
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-full object-cover"
+                      {/* html5-qrcode renders its own video element into this div */}
+                      <div
+                        id="video-container"
+                        ref={videoContainerRef}
+                        className="w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
                       />
-                      {/* Camera Frame Overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-64 h-64 border-4 border-white/30 rounded-2xl relative">
-                          {/* Scanning Animation */}
-                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan"></div>
-                          
-                          {/* Corner decorations */}
-                          <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white"></div>
-                          <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white"></div>
-                          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white"></div>
-                          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white"></div>
-                        </div>
+                      {/* Corner decorations */}
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-4 border-white/30 rounded-2xl pointer-events-none">
+                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white" />
+                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white" />
+                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white" />
+                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white" />
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan" />
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse"></div>
-                      
-                      {/* Camera Frame */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 animate-pulse" />
                       <div className="relative z-10 w-full h-full flex items-center justify-center">
                         <div className="w-64 h-64 border-4 border-white/30 rounded-2xl relative">
-                          {/* Corner decorations */}
-                          <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white"></div>
-                          <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white"></div>
-                          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white"></div>
-                          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white"></div>
+                          <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white" />
+                          <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white" />
+                          <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white" />
+                          <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white" />
                         </div>
                       </div>
-
-                      {/* Camera Icon */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                        <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <svg
+                          className="w-20 h-20 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
                       </div>
                     </>
@@ -444,32 +354,52 @@ export default function ScanPage() {
 
                 {/* Camera Controls */}
                 <div className="flex justify-center space-x-4 mb-6">
-                  <button 
+                  <button
                     onClick={toggleFlash}
                     disabled={!cameraActive}
                     className={`px-6 py-3 rounded-full flex items-center space-x-2 transition-colors ${
-                      cameraActive 
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      cameraActive
+                        ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
                     </svg>
-                    <span>{isFlashOn ? 'Flash On' : 'Flash Off'}</span>
+                    <span>{isFlashOn ? "Flash On" : "Flash Off"}</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     onClick={switchCamera}
                     disabled={!cameraActive}
                     className={`px-6 py-3 rounded-full flex items-center space-x-2 transition-colors ${
-                      cameraActive 
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      cameraActive
+                        ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
                     </svg>
                     <span>Switch Camera</span>
                   </button>
@@ -477,71 +407,95 @@ export default function ScanPage() {
 
                 {/* Camera Action Button */}
                 {cameraActive ? (
-                  <button 
+                  <button
                     onClick={stopCamera}
                     className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-8 py-4 rounded-full font-semibold hover:from-red-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   >
                     Stop Camera
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={startCamera}
                     disabled={isRequestingPermission}
                     className={`px-8 py-4 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
                       isRequestingPermission
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        ? "bg-gray-400 text-white cursor-not-allowed"
                         : hasCameraPermission === false
-                        ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700'
-                        : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                        ? "bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700"
+                        : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
                     }`}
                   >
                     {isRequestingPermission ? (
                       <span className="flex items-center space-x-2">
-                        <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        <svg
+                          className="w-5 h-5 animate-spin"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
                         </svg>
                         <span>Requesting Access...</span>
                       </span>
                     ) : hasCameraPermission === false ? (
-                      'Camera Access Denied'
+                      "Camera Access Denied"
                     ) : (
-                      'Start Camera'
+                      "Start Camera"
                     )}
                   </button>
                 )}
 
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
-                  {hasCameraPermission === false ? (
-                    'Camera access denied. Please check browser permissions or try serving over HTTPS/localhost.'
-                  ) : (
-                    'Position the QR code within the frame to scan automatically'
-                  )}
+                  {hasCameraPermission === false
+                    ? "Camera access denied. Please check browser permissions or try serving over HTTPS/localhost."
+                    : "Position the QR code within the frame to scan automatically"}
                 </p>
               </div>
             ) : (
               <div className="text-center">
                 {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-12 mb-6 hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
+                <div
+                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-12 mb-6 hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <div className="flex flex-col items-center justify-center space-y-4">
                     {uploadedImage ? (
                       <>
-                        <img 
-                          src={uploadedImage} 
-                          alt="Uploaded QR code" 
+                        {/* Hidden container for html5-qrcode to scan the file */}
+                        <div
+                          id="uploaded-image-container"
+                          className="hidden"
+                        />
+                        <img
+                          src={uploadedImage}
+                          alt="Uploaded QR code"
                           className="w-32 h-32 object-contain rounded-lg"
                         />
                         <p className="text-sm text-green-600 dark:text-green-400">
-                          Image uploaded successfully!
+                          Image uploaded! Scanning...
                         </p>
                       </>
                     ) : (
                       <>
-                        <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        <svg
+                          className="w-16 h-16 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
                         </svg>
-                        
+
                         <div className="text-center">
                           <p className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                             Drop your QR code image here
@@ -568,7 +522,7 @@ export default function ScanPage() {
                 />
 
                 {/* Upload Button */}
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-full font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl mb-4"
                 >
@@ -577,7 +531,7 @@ export default function ScanPage() {
 
                 {/* Clear button when image is uploaded */}
                 {uploadedImage && (
-                  <button 
+                  <button
                     onClick={clearUploadedImage}
                     className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-8 py-4 rounded-full font-semibold hover:from-red-700 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl mb-4 ml-4"
                   >
@@ -600,44 +554,76 @@ export default function ScanPage() {
                 <p className="text-green-700 dark:text-green-300 break-all mb-4">
                   {scanResult}
                 </p>
-                <div className="flex space-x-3">
-                  <button 
+                <div className="flex space-x-3 flex-wrap">
+                  <button
                     onClick={() => {
                       navigator.clipboard.writeText(scanResult);
                     }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
                     </svg>
                     <span>Copy</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       try {
-                        if (scanResult.startsWith('http://') || scanResult.startsWith('https://')) {
-                          window.open(scanResult, '_blank');
+                        if (
+                          scanResult.startsWith("http://") ||
+                          scanResult.startsWith("https://")
+                        ) {
+                          window.open(scanResult, "_blank");
                         } else {
-                          // Try to open as URL if it looks like one
-                          window.open(`https://${scanResult}`, '_blank');
+                          window.open(`https://${scanResult}`, "_blank");
                         }
                       } catch (error) {
-                        console.error('Error opening URL:', error);
+                        console.error("Error opening URL:", error);
                       }
                     }}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                     <span>Open</span>
                   </button>
-                  <button 
-                    onClick={() => setScanResult('')}
+                  <button
+                    onClick={() => setScanResult("")}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                     <span>Clear</span>
                   </button>
@@ -648,24 +634,38 @@ export default function ScanPage() {
 
           {/* Quick Actions */}
           <div className="text-center mt-12">
-            <button 
-              onClick={() => router.push('/generate')}
+            <button
+              onClick={() => router.push("/generate")}
               className="inline-flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
             >
               <span>Need to create a QR code instead?</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>
         </div>
       </main>
 
-      {/* Add scanning animation */}
+      {/* Scanning animation */}
       <style jsx>{`
         @keyframes scan {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(200%); }
+          0% {
+            transform: translateY(-100%);
+          }
+          100% {
+            transform: translateY(400%);
+          }
         }
         .animate-scan {
           animation: scan 2s ease-in-out infinite;
