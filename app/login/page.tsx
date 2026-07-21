@@ -23,7 +23,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    console.log("submitting")
     try {
       const result = await signIn("credentials", {
         email: formData.email,
@@ -32,7 +32,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-      
+        console.log("result" , result)
         toast({
           title: "Error",
           description: "Invalid email or password",
@@ -42,7 +42,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (error) {
-      
+      console.log("result" , error)
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
