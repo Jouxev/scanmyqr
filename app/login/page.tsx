@@ -32,6 +32,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
+      
         toast({
           title: "Error",
           description: "Invalid email or password",
@@ -40,7 +41,8 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard");
       }
-    } catch {
+    } catch (error) {
+      
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

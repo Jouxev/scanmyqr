@@ -1,17 +1,32 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseKeyInfo } from "@/lib/supabase-key-info";
 
 // Lazy getter — Supabase client is only created when first accessed at runtime,
 // not during module evaluation (which happens during Vercel's build phase).
 function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Missing Supabase environment variables.");
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("[Auth] Missing env vars:", {
+      hasUrl: !!supabaseUrl,
+      hasAnonKey: !!supabaseAnonKey,
+    });
+    throw new Error(
+      "Missing Supabase environment variables. " +
+      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set."
+    );
   }
-  return createClient(supabaseUrl, supabaseServiceKey);
+  const anonInfo = getSupabaseKeyInfo(supabaseAnonKey);
+  if (!anonInfo.ref) {
+    console.error("[Auth] Invalid anon key.");
+  }
+  // Dynamic import to avoid top-level evaluation issues
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { createClient } = require("@supabase/supabase-js");
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
 
 export const authOptions: NextAuthOptions = {
@@ -29,36 +44,33 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const supabase = getSupabase();
-          const { data: user, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("email", credentials.email as string)
-            .single();
+          // Use Supabase Auth — validates email/password hash internally
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: credentials.email as string,
+            password: credentials.password as string,
+          });
 
-          if (error || !user) {
-            console.error("User not found:", error);
+          if (error || !data.user) {
+            const anonInfo = getSupabaseKeyInfo(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+            const serviceInfo = getSupabaseKeyInfo(process.env.SUPABASE_SERVICE_ROLE_KEY);
+            console.error("[Auth] Supabase key refs:", {
+              anonRef: anonInfo.ref,
+              anonRole: anonInfo.role,
+              serviceRef: serviceInfo.ref,
+              serviceRole: serviceInfo.role,
+              sameProject: !!anonInfo.ref && anonInfo.ref === serviceInfo.ref,
+            });
+            console.error("[Auth] signInWithPassword error:", error);
             return null;
           }
 
-          if (user.password) {
-            const isValid = await bcrypt.compare(
-              credentials.password as string,
-              user.password
-            );
-
-            if (!isValid) {
-              console.error("Invalid password");
-              return null;
-            }
-          }
-
           return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.name ?? null,
           };
         } catch (err) {
-          console.error("Auth error:", err);
+          console.error("[Auth] authorize error:", err);
           return null;
         }
       },

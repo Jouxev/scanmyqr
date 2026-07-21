@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseKeyInfo } from "@/lib/supabase-key-info";
 
 // Lazy getter — avoids build-time errors when env vars aren't available.
 function getSupabase() {
@@ -32,57 +31,64 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUser, error: _checkError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email)
-      .single();
+    // Create user in Supabase Auth (handles password hashing internally)
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name: name || "User" },
+    });
 
-    if (existingUser) {
+    if (authError) {
+      console.error("[Signup] Auth createUser error:", authError);
       return NextResponse.json(
-        { message: "User with this email already exists" },
+        { message: authError.message || "Failed to create user" },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const anonInfo = getSupabaseKeyInfo(anonKey);
+    const serviceInfo = getSupabaseKeyInfo(serviceKey);
 
-    // Create user
-    const { data: user, error: createError } = await supabase
-      .from("users")
-      .insert({
-        name: name || "User",
+    if (anonKey) {
+      const anonClient = createClient(supabaseUrl, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { error: signInError } = await anonClient.auth.signInWithPassword({
         email,
-        password: hashedPassword,
-      })
-      .select()
-      .single();
-
-    if (createError) {
-      console.error("Create user error:", createError);
-      return NextResponse.json(
-        { message: "Failed to create user" },
-        { status: 500 }
-      );
+        password,
+      });
+      if (signInError) {
+        return NextResponse.json(
+          {
+            message:
+              "User created but cannot sign in. Check your Supabase keys (anon/service) match the same project.",
+            details: {
+              signInError: signInError.message,
+              anonRef: anonInfo.ref,
+              serviceRef: serviceInfo.ref,
+              sameProject: !!anonInfo.ref && anonInfo.ref === serviceInfo.ref,
+            },
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(
-      { message: "User created successfully", userId: user.id },
+      { message: "User created successfully", userId: authUser.user?.id },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Signup error:", error);
-    
-    // Check if it's a database connection error
-    if (error.message?.includes("fetch failed") || 
+    console.error("[Signup] Unexpected error:", error);
+
+    if (error.message?.includes("fetch failed") ||
         error.message?.includes("connect ECONNREFUSED")) {
       return NextResponse.json(
-        { 
-          message: "Database connection error. Please create database tables first.",
-          error: "DATABASE_NOT_CONFIGURED" 
-        },
+        { message: "Database connection error. Please check your configuration.", error: "DATABASE_NOT_CONFIGURED" },
         { status: 503 }
       );
     }
