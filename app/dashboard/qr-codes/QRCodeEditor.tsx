@@ -141,7 +141,7 @@ export default function QRCodeEditor({ qrCode }: Props) {
               <Button
                 variant="outline"
                 className="h-12 rounded-2xl border-white/10 bg-white/5 px-5 text-slate-100 hover:bg-white/10 hover:text-white"
-                asChild
+                
               >
                 <a href={trackedUrl} target="_blank" rel="noreferrer">
                   <Eye className="mr-2 h-4 w-4" />

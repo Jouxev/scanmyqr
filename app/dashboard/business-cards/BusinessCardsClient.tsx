@@ -184,16 +184,16 @@ export default function BusinessCardsClient({ initialCards }: BusinessCardsClien
                   </div>
                 </div>
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="z-10 rounded-xl border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white">
+                  <DropdownMenuTrigger className="z-10 rounded-xl border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white">
+                   
                       <MoreVertical className="h-4 w-4" />
-                    </button>
+                    
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
                     className="w-48 rounded-2xl border-white/10 bg-slate-900/95 text-slate-100 backdrop-blur-xl"
                   >
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem >
                       <Link href={`/dashboard/business-cards/${card.id}`}>
                         <span className="flex items-center">
                           <Edit className="h-4 w-4 mr-2" />
@@ -201,7 +201,7 @@ export default function BusinessCardsClient({ initialCards }: BusinessCardsClien
                         </span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem >
                       <Link href={`/card/${card.slug}`} target="_blank">
                         <span className="flex items-center">
                           <ExternalLink className="h-4 w-4 mr-2" />
@@ -272,7 +272,7 @@ export default function BusinessCardsClient({ initialCards }: BusinessCardsClien
                     variant="ghost"
                     size="icon"
                     className="h-9 w-9 rounded-xl text-slate-300 hover:bg-white/5 hover:text-white"
-                    asChild
+                    
                   >
                     <Link href={`/card/${card.slug}`} target="_blank">
                       <ExternalLink className="h-4 w-4" />

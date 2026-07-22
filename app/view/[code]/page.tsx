@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowUpRight, Copy, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ interface PageProps {
 }
 
 function getActionHref(type: string, content: string) {
+  console.log("type " , type)
   if (type === "EMAIL" || content.startsWith("mailto:")) return content;
   if (type === "PHONE" || content.startsWith("tel:")) return content;
   if (type === "SMS" || content.startsWith("sms:")) return content;
@@ -18,6 +19,7 @@ function getActionHref(type: string, content: string) {
   if (/^https?:\/\//i.test(content)) return content;
   return null;
 }
+
 
 export default async function QRCodeViewPage({ params }: PageProps) {
   const { code } = await params;
@@ -39,6 +41,11 @@ export default async function QRCodeViewPage({ params }: PageProps) {
   }
 
   const actionHref = getActionHref(qrCode.type, qrCode.content);
+
+  // If type is URL, redirect directly to the content
+  if (qrCode.type === "URL" || qrCode.type === "BUSINESS_CARD" || qrCode.type === "RESTAURANT_MENU" && actionHref) {
+    redirect(actionHref);
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_35%),linear-gradient(180deg,_#020617,_#0f172a)] px-4 py-8 sm:px-6 lg:px-8">
@@ -68,7 +75,7 @@ export default async function QRCodeViewPage({ params }: PageProps) {
             <div className="flex flex-wrap gap-3">
               {actionHref ? (
                 <Button
-                  asChild
+                  
                   className="rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-600 text-white"
                 >
                   <a href={actionHref} target="_blank" rel="noreferrer">
@@ -79,7 +86,7 @@ export default async function QRCodeViewPage({ params }: PageProps) {
               ) : null}
 
               <Button
-                asChild
+                
                 variant="outline"
                 className="rounded-2xl border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
               >

@@ -317,16 +317,16 @@ export default function QRCodesClient({ initialQRCodes }: QRCodesClientProps) {
                 </div>
 
                 <DropdownMenu >
-                  <DropdownMenuTrigger >
-                    <button className="rounded-xl border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white">
+                  <DropdownMenuTrigger className="rounded-xl border border-white/10 bg-white/5 p-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white">
+                   
                       <MoreVertical className="h-4 w-4" />
-                    </button>
+                   
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
                     className="w-48 rounded-2xl border-white/10 bg-slate-900/95 text-slate-100 backdrop-blur-xl"
                   >
-                    <DropdownMenuItem >
+                {/**     <DropdownMenuItem >
                       <Link href={`/dashboard/qr-codes/${qr.id}`}>
                         <span className="flex items-center">
                           <Eye className="h-4 w-4 mr-2" />
@@ -334,6 +334,7 @@ export default function QRCodesClient({ initialQRCodes }: QRCodesClientProps) {
                         </span>
                       </Link>
                     </DropdownMenuItem>
+                    */}
                     <DropdownMenuItem >
                       <Link href={`/dashboard/qr-codes/${qr.id}/edit`}>
                         <span className="flex items-center">
