@@ -20,9 +20,9 @@ export async function getAppSession(): Promise<AppSession | null> {
   return {
     user: {
       id: (session.user as any).id ?? "",
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
+      name: session.user.name ?? "",
+      email: session.user.email ?? "",
+      image: session.user.image ?? "",
     },
     expires: session.expires ?? "",
   };

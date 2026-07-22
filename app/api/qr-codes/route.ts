@@ -7,7 +7,7 @@ import type { Database } from "@/types/database";
 
 export async function GET(request: Request) {
   try {
-    const session = await getAppSession(request);
+    const session = await getAppSession();
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getAppSession(request);
+    const session = await getAppSession();
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
