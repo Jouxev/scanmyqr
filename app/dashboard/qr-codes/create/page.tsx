@@ -198,7 +198,7 @@ export default function CreateQRCodePage() {
           backgroundColor,
         }),
       });
-
+     
       if (!response.ok) throw new Error("Failed to save QR code");
 
       toast({
@@ -207,6 +207,7 @@ export default function CreateQRCodePage() {
       });
       router.push("/dashboard/qr-codes");
     } catch (_error) {
+     
       toast({
         title: "Error",
         description: "Failed to save QR code",

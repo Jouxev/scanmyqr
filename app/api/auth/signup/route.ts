@@ -47,6 +47,20 @@ export async function POST(request: Request) {
       );
     }
 
+    // Create user record in the users table
+    const { error: insertError } = await supabase.from("users").insert({
+      id: authUser.user?.id,
+      email: email,
+      name: name || "User",
+      subscription_plan: "FREE",
+      role: "USER",
+    });
+
+    if (insertError) {
+      console.error("[Signup] Failed to create user record:", insertError);
+      // Don't fail the signup, but log the error
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

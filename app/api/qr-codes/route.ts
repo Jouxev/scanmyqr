@@ -90,6 +90,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ qrCode }, { status: 201 });
   } catch (error) {
     console.error("Error creating QR code:", error);
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ message: `Internal server error ${error}` }, { status: 500 });
   }
 }
