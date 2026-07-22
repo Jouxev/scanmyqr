@@ -43,8 +43,10 @@ export default async function QRCodeViewPage({ params }: PageProps) {
   const actionHref = getActionHref(qrCode.type, qrCode.content);
 
   // If type is URL, redirect directly to the content
-  if (qrCode.type === "URL" || qrCode.type === "BUSINESS_CARD" || qrCode.type === "RESTAURANT_MENU" && actionHref) {
-    redirect(actionHref);
+  if(actionHref){
+    if (qrCode.type === "URL" || qrCode.type === "BUSINESS_CARD" || qrCode.type === "RESTAURANT_MENU" && actionHref) {
+      redirect(actionHref);
+    }
   }
 
   return (
